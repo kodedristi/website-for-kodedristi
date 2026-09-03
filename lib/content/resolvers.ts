@@ -372,11 +372,10 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettingsData = {
   officeHours: "10:00 AM – 6:00 PM",
   officeDays: "",
   footerNote: "#WithYouEveryStep",
-  facebook: "",
-  linkedin: "",
-  instagram: "",
-  youtube: "",
-  whatsapp: "",
+  facebook: "https://www.facebook.com/kodedristi",
+  instagram: "https://www.instagram.com/kodedristi",
+  tiktok: "https://www.tiktok.com/@kodedristi",
+  linkedin: "https://www.linkedin.com/company/kodedristi",
 };
 
 export async function getSiteSettings(): Promise<SiteSettingsData> {

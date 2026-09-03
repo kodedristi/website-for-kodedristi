@@ -6,13 +6,14 @@ import {
   Call02Icon,
   Clock01Icon,
   ArrowRight01Icon,
-  Facebook01Icon,
-  Linkedin01Icon,
-  InstagramIcon,
-  YoutubeIcon,
-  WhatsappIcon,
 } from "hugeicons-react";
 import { Container } from "@/components/ui/container";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  TiktokIcon,
+  LinkedinIcon,
+} from "@/components/site-footer/social-icons";
 import { getSiteSettings } from "@/lib/content/resolvers";
 import type { NavGroup } from "@/lib/data/nav";
 
@@ -38,12 +39,11 @@ export async function Footer({ navGroups }: { navGroups: NavGroup[] }) {
     .join(" · ");
 
   const socials = [
-    { href: settings.facebook, label: "Facebook", Icon: Facebook01Icon },
-    { href: settings.linkedin, label: "LinkedIn", Icon: Linkedin01Icon },
+    { href: settings.facebook, label: "Facebook", Icon: FacebookIcon },
     { href: settings.instagram, label: "Instagram", Icon: InstagramIcon },
-    { href: settings.youtube, label: "YouTube", Icon: YoutubeIcon },
-    { href: settings.whatsapp, label: "WhatsApp", Icon: WhatsappIcon },
-  ].filter((s): s is { href: string; label: string; Icon: typeof Facebook01Icon } =>
+    { href: settings.tiktok, label: "TikTok", Icon: TiktokIcon },
+    { href: settings.linkedin, label: "LinkedIn", Icon: LinkedinIcon },
+  ].filter((s): s is { href: string; label: string; Icon: typeof FacebookIcon } =>
     Boolean(s.href && s.href.trim())
   );
 
