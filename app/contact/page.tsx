@@ -23,10 +23,15 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function ContactPage() {
-  const [contactDetails, hero] = await Promise.all([
+export default async function ContactPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[]>>;
+}) {
+  const [contactDetails, hero, params] = await Promise.all([
     getContactDetails(),
     getPageHero("contact"),
+    searchParams,
   ]);
 
   return (
@@ -42,7 +47,7 @@ export default async function ContactPage() {
 
       <section className="section">
         <Container className="grid gap-8 lg:grid-cols-[1fr_320px]">
-          <EnquiryForm />
+          <EnquiryForm initialReason={typeof params.section === "string" ? params.section : undefined} />
 
           <aside className="flex flex-col gap-3">
             {contactDetails.map((detail) => (

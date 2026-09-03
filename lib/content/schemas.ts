@@ -727,8 +727,8 @@ const homeFinalCta: SeedRow = {
     title: "Let's architect your digital future.",
     description:
       "Tell us what you're trying to solve. We'll respond within one business day with next steps — no obligation.",
-    primaryLabel: "Start a Project",
-    primaryHref: "/contact",
+    primaryLabel: "Send Proposal",
+    primaryHref: "/contact?section=proposal",
     secondaryLabel: "Explore Programs",
     secondaryHref: "/learn",
   },

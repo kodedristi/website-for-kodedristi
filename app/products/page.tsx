@@ -32,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("products", {
     title: "Products",
     description:
-      "Okil.ai, Billing Software, Accounting Software and LMS — in-house products built and maintained by KodeDristi.",
+      "Billing Software, Accounting Software and LMS — in-house products built and maintained by KodeDristi.",
     path: "/products",
   });
 }

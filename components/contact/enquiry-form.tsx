@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 import { solutions } from "@/lib/data/solutions";
 import { courses } from "@/lib/data/courses";
 
-type Reason = "project" | "course" | "partnership";
+type Reason = "project" | "course" | "partnership" | "proposal";
 
 const REASONS: { key: Reason; label: string }[] = [
   { key: "project", label: "Project Enquiry" },
   { key: "course", label: "Course Application" },
   { key: "partnership", label: "Partnership / Sponsorship" },
+  { key: "proposal", label: "Proposal" },
 ];
 
 const BUDGET_RANGES = ["Under NPR 5 lakh", "NPR 5–15 lakh", "NPR 15–40 lakh", "NPR 40 lakh+", "Not sure yet"];
@@ -23,8 +24,8 @@ const fieldClasses =
   "focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-brand-blue";
 const labelClasses = "text-sm font-medium text-text-secondary";
 
-export function EnquiryForm() {
-  const [reason, setReason] = useState<Reason>("project");
+export function EnquiryForm({ initialReason }: { initialReason?: string }) {
+  const [reason, setReason] = useState<Reason>((initialReason as Reason) || "project");
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [error, setError] = useState(false);
 
@@ -57,6 +58,10 @@ export function EnquiryForm() {
       payload.partnershipType = value("partnershipType");
       payload.contribution = value("contribution");
       payload.goals = value("goals");
+    } else if (reason === "proposal") {
+      payload.title = value("proposalTitle");
+      payload.description = value("proposalDescription");
+      payload.amount = value("proposalAmount");
     }
     try {
       const res = await fetch("/api/contact/submit", {
@@ -242,6 +247,39 @@ export function EnquiryForm() {
             </Field>
           </>
         )}
+
+        {reason === "proposal" && (
+          <>
+            <Field label="Proposal title" htmlFor="proposalTitle">
+              <input
+                id="proposalTitle"
+                name="proposalTitle"
+                required
+                className={fieldClasses}
+                placeholder="What is your proposal about?"
+              />
+            </Field>
+            <Field label="Proposal amount (NPR)" htmlFor="proposalAmount">
+              <input
+                id="proposalAmount"
+                name="proposalAmount"
+                type="text"
+                className={fieldClasses}
+                placeholder="e.g., 500,000 - 2,000,000"
+              />
+            </Field>
+            <Field label="Proposal details" htmlFor="proposalDescription" full>
+              <textarea
+                id="proposalDescription"
+                name="proposalDescription"
+                required
+                rows={6}
+                className={fieldClasses}
+                placeholder="Describe your proposal in detail. Include scope, timeline, deliverables, and any supporting documents or links."
+              />
+            </Field>
+          </>
+        )}
       </div>
 
       {error && (
@@ -259,6 +297,7 @@ export function EnquiryForm() {
             {reason === "project" && "Request Proposal"}
             {reason === "course" && "Apply"}
             {reason === "partnership" && "Send Proposal Request"}
+            {reason === "proposal" && "Submit Proposal"}
             <SentIcon className="h-6 w-6" />
           </>
         )}

@@ -3,7 +3,7 @@ import { createSubmission, getUserByEmail, upsertUser, upsertEnrollment } from "
 
 export const runtime = "nodejs";
 
-const VALID_SECTIONS = new Set(["project", "course", "partnership", "product_talk"]);
+const VALID_SECTIONS = new Set(["project", "course", "partnership", "proposal", "product_talk"]);
 const MAX_LEN = 5000;
 
 export async function POST(req: Request) {

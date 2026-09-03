@@ -63,7 +63,6 @@ export const navGroups: NavGroup[] = [
     label: "Products",
     href: "/products",
     items: [
-      { label: "Okil.ai", href: "/products/okil-ai", description: "AI-assisted workspace for teams." },
       { label: "Billing Software", href: "/products/billing-software", description: "Invoicing and billing, simplified." },
       { label: "Accounting Software", href: "/products/accounting-software", description: "Books, reconciled and always current." },
       { label: "LMS", href: "/products/lms", description: "Learning management for institutions." },

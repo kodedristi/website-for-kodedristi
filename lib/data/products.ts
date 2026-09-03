@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Receipt, Calculator, GraduationCap } from "lucide-react";
+import { Receipt, Calculator, GraduationCap } from "lucide-react";
 
 export type Product = {
   slug: string;
@@ -13,22 +13,6 @@ export type Product = {
 };
 
 export const products: Product[] = [
-  {
-    slug: "okil-ai",
-    name: "Okil.ai",
-    tagline: "An AI-assisted workspace that keeps teams moving.",
-    icon: Sparkles,
-    accent: "blue",
-    description:
-      "Okil.ai brings AI-assisted drafting, summarisation and task automation into one workspace, so teams spend less time on repetitive writing and coordination work.",
-    features: [
-      "AI-assisted document drafting & summarisation",
-      "Task and workflow automation",
-      "Team workspaces with shared context",
-      "Integrations via API",
-    ],
-    audience: "Growing teams that want AI leverage without building it in-house.",
-  },
   {
     slug: "billing-software",
     name: "Billing Software",
