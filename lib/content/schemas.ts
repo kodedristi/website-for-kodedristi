@@ -1375,9 +1375,11 @@ export const CONTENT_SCHEMAS: ContentSchema[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Admin ordering — mirrors the order content appears on the site: global
-// chrome, then the homepage section by section, then the other pages in nav
-// order, then the hackathon pages.
+// Admin ordering — grouped the way the sidebar is: site-wide chrome, the
+// homepage section by section, then everything else that feeds an interior
+// page in one bucket, then the two programmes and the galleries. The small
+// per-page groups (About, Careers, Products, …) were folded into
+// "Page content" so the tree is six headings instead of fourteen.
 // ---------------------------------------------------------------------------
 
 export const CONTENT_GROUPS: { group: string; types: string[] }[] = [
@@ -1403,15 +1405,27 @@ export const CONTENT_GROUPS: { group: string; types: string[] }[] = [
       "testimonial",
     ],
   },
-  { group: "Learn", types: ["process-step", "faq"] },
-  { group: "About", types: ["value", "capability"] },
-  { group: "Careers", types: ["perk", "role"] },
-  { group: "Insights", types: ["article"] },
-  { group: "Contact", types: ["contact-detail"] },
-  { group: "Partners", types: ["partner", "partner-benefit"] },
-  { group: "Products", types: ["product"] },
-  { group: "Projects", types: ["project"] },
-  { group: "Academia", types: ["mou-partnership"] },
+  {
+    // Everything behind an interior page, in page order: /learn, /about,
+    // /careers, /products, /projects, /insights, /contact, /partners and the
+    // academia section.
+    group: "Page content",
+    types: [
+      "process-step",
+      "faq",
+      "value",
+      "capability",
+      "perk",
+      "role",
+      "product",
+      "project",
+      "article",
+      "contact-detail",
+      "partner",
+      "partner-benefit",
+      "mou-partnership",
+    ],
+  },
   {
     group: "Dristi Lagani",
     types: [

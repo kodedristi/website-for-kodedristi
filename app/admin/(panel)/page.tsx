@@ -13,6 +13,7 @@ import {
   Calendar01Icon,
   ChartUpIcon,
   ChartBarLineIcon,
+  ContentWritingIcon,
   InboxUnreadIcon,
   GraduationScrollIcon,
   ArrowRight01Icon,
@@ -21,6 +22,7 @@ import {
   PackageIcon,
   Building01Icon,
   Note01Icon,
+  Album02Icon,
   SearchVisualIcon,
   Settings02Icon,
   Image01Icon,
@@ -49,10 +51,10 @@ export default async function AdminDashboard() {
 
   const countOf = (type: string) => content.find((c) => c.type === type)?.count ?? 0;
 
-  /* The dashboard's job is to be the first click of every three. These are
-     the destinations, in the order the site is built — not a summary of the
-     database, which is what "N items across M types" was and which told
-     nobody where to go next. */
+  /* The dashboard's job is to be the first click of every three, laid out
+     the way the sidebar is: the things you edit, then the library, inbox
+     and settings. Not a summary of the database — that told nobody where to
+     go next. */
   const shortcuts = [
     {
       href: "/admin/homepage",
@@ -73,38 +75,33 @@ export default async function AdminDashboard() {
       icon: PackageIcon,
     },
     {
-      href: "/admin/partners",
-      label: "Partners",
-      description: `${countOf("hackathon-partner") + countOf("partner")} organisations`,
-      icon: Building01Icon,
-    },
-    {
       href: "/admin/blog",
       label: "Blog",
       description: `${countOf("article")} article${countOf("article") === 1 ? "" : "s"}`,
       icon: Note01Icon,
     },
     {
-      href: "/admin/media",
-      label: "Media",
-      description: "Images, alt text and reuse",
-      icon: Image01Icon,
+      href: "/admin/partners",
+      label: "Partners",
+      description: `${countOf("hackathon-partner") + countOf("partner")} organisations`,
+      icon: Building01Icon,
     },
     {
-      href: "/admin/seo",
-      label: "SEO",
-      description: "Titles, descriptions and share cards",
-      icon: SearchVisualIcon,
-    },
-    {
-      href: "/admin/settings",
-      label: "Site settings",
-      description: "Phone, email, address and hours",
-      icon: Settings02Icon,
+      href: "/admin/pages/gallery",
+      label: "Gallery",
+      description: `${countOf("gallery")} collection${countOf("gallery") === 1 ? "" : "s"}`,
+      icon: Album02Icon,
     },
   ];
 
   const inbox = [
+    {
+      href: "/admin/media",
+      label: "Media",
+      description: "Images, alt text and reuse",
+      icon: Image01Icon,
+      badge: 0,
+    },
     {
       href: "/admin/submissions",
       label: "Submissions",
@@ -120,10 +117,24 @@ export default async function AdminDashboard() {
       badge: 0,
     },
     {
+      href: "/admin/settings",
+      label: "Site settings",
+      description: "Phone, email, address and social",
+      icon: Settings02Icon,
+      badge: 0,
+    },
+    {
+      href: "/admin/seo",
+      label: "SEO",
+      description: "Titles, descriptions and share cards",
+      icon: SearchVisualIcon,
+      badge: 0,
+    },
+    {
       href: "/admin/content",
       label: "All content types",
       description: `${contentCount} items across ${content.length} types`,
-      icon: ChartBarLineIcon,
+      icon: ContentWritingIcon,
       badge: 0,
     },
   ];
@@ -152,29 +163,36 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {shortcuts.map((sc) => (
-          <Link
-            key={sc.href}
-            href={sc.href}
-            className="focus-ring group card card-hover flex items-center justify-between gap-3 p-5"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green-hover">
-                <sc.icon className="h-7.5 w-7.5" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-text-primary">{sc.label}</p>
-                <p className="text-xs text-text-muted">{sc.description}</p>
+      <div className="flex flex-col gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Manage</p>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {shortcuts.map((sc) => (
+            <Link
+              key={sc.href}
+              href={sc.href}
+              className="focus-ring group card card-hover flex items-center justify-between gap-3 p-5"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-green/10 text-brand-green-hover">
+                  <sc.icon className="h-7.5 w-7.5" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{sc.label}</p>
+                  <p className="text-xs text-text-muted">{sc.description}</p>
+                </div>
               </div>
-            </div>
-            <ArrowRight01Icon className="h-6 w-6 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-link" />
-          </Link>
-        ))}
+              <ArrowRight01Icon className="h-6 w-6 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-link" />
+            </Link>
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {inbox.map((sc) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          Library, inbox &amp; settings
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {inbox.map((sc) => (
           <Link
             key={sc.href}
             href={sc.href}
@@ -204,6 +222,7 @@ export default async function AdminDashboard() {
             <ArrowRight01Icon className="h-6 w-6 shrink-0 text-text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-link" />
           </Link>
         ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">

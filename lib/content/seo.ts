@@ -6,9 +6,23 @@ import { getPageSeo } from "@/lib/content/resolvers";
  * sitemap, robots, JSON-LD. One constant so a domain change is one edit.
  * Override per environment with NEXT_PUBLIC_SITE_URL (no trailing slash).
  */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://kodedristi.com"
-).replace(/\/+$/, "");
+const DEFAULT_SITE_URL = "https://kodedristi.com";
+
+function resolveSiteUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) return DEFAULT_SITE_URL;
+  // A malformed value (a stray "||", a comment left inline) must not take the
+  // whole build down at `new URL(SITE_URL)` — fall back to the default.
+  try {
+    const cleaned = raw.replace(/\/+$/, "");
+    new URL(cleaned);
+    return cleaned;
+  } catch {
+    return DEFAULT_SITE_URL;
+  }
+}
+
+export const SITE_URL = resolveSiteUrl();
 
 /**
  * Builds a page's `<head>` from its CMS row, falling back to what the page

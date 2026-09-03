@@ -9,6 +9,7 @@ import {
   UserMultipleIcon,
   GlobeIcon,
   Image01Icon,
+  Album02Icon,
   ContentWritingIcon,
   ArrowDown01Icon,
   Search01Icon,
@@ -27,33 +28,59 @@ import type { AdminNavGroup } from "@/lib/content/schemas";
 import { cn } from "@/lib/utils";
 
 /**
- * The main navigation, in the order the website itself is built: the
- * dashboard, then the homepage, then the other pages, then the collections
- * that are edited most often, then media, search and settings.
+ * The main navigation, grouped by what the person is here to do rather than
+ * by content type: edit the site (Manage), the asset library, the things
+ * people sent in (Inbox), and the settings.
  *
- * It mirrors the site rather than the database on purpose. "Section
- * headings" and "Home trust" are what the content types are called; "the
- * homepage" is what the person editing it is thinking about, and a menu
- * written in the second vocabulary is the one they can use without being
- * taught the first.
+ * Labels are the site's own vocabulary, not the database's — "the homepage"
+ * is what the person editing it is thinking about, not "Section headings"
+ * and "Home trust", and a menu written the second way is one they cannot use
+ * without being taught the first.
  */
-const PRIMARY = [
-  { href: "/admin", label: "Dashboard", icon: DashboardSquare01Icon, exact: true },
-  { href: "/admin/homepage", label: "Homepage", icon: Home01Icon, exact: false },
-  { href: "/admin/pages", label: "Pages", icon: File01Icon, exact: false },
-  { href: "/admin/projects", label: "Projects", icon: PackageIcon, exact: false },
-  { href: "/admin/partners", label: "Partners", icon: Building01Icon, exact: false },
-  { href: "/admin/blog", label: "Blog", icon: Note01Icon, exact: false },
-  { href: "/admin/media", label: "Media", icon: Image01Icon, exact: false },
-  { href: "/admin/seo", label: "SEO", icon: SearchVisualIcon, exact: false },
-  { href: "/admin/settings", label: "Site settings", icon: Settings02Icon, exact: false },
-];
+const DASHBOARD = {
+  href: "/admin",
+  label: "Dashboard",
+  icon: DashboardSquare01Icon,
+  exact: true,
+};
 
-/** Everything that is not part of editing the website itself. */
-const SECONDARY = [
-  { href: "/admin/submissions", label: "Submissions", icon: InboxUnreadIcon, exact: false },
-  { href: "/admin/users", label: "Users", icon: UserMultipleIcon, exact: false },
-  { href: "/admin/content", label: "All content", icon: ContentWritingIcon, exact: true },
+const NAV_SECTIONS: { heading: string; links: Omit<NavLinkSpec, "badge">[] }[] = [
+  {
+    heading: "Manage",
+    links: [
+      { href: "/admin/homepage", label: "Homepage", icon: Home01Icon, exact: false },
+      {
+        href: "/admin/pages",
+        label: "Pages",
+        icon: File01Icon,
+        exact: false,
+        except: ["/admin/pages/gallery"],
+      },
+      { href: "/admin/projects", label: "Projects", icon: PackageIcon, exact: false },
+      { href: "/admin/blog", label: "Blog", icon: Note01Icon, exact: false },
+      { href: "/admin/partners", label: "Partners", icon: Building01Icon, exact: false },
+      { href: "/admin/pages/gallery", label: "Gallery", icon: Album02Icon, exact: true },
+    ],
+  },
+  {
+    heading: "Library",
+    links: [{ href: "/admin/media", label: "Media", icon: Image01Icon, exact: false }],
+  },
+  {
+    heading: "Inbox",
+    links: [
+      { href: "/admin/submissions", label: "Submissions", icon: InboxUnreadIcon, exact: false },
+      { href: "/admin/users", label: "Users", icon: UserMultipleIcon, exact: false },
+    ],
+  },
+  {
+    heading: "Settings",
+    links: [
+      { href: "/admin/settings", label: "Site settings", icon: Settings02Icon, exact: false },
+      { href: "/admin/seo", label: "SEO", icon: SearchVisualIcon, exact: false },
+      { href: "/admin/content", label: "All content", icon: ContentWritingIcon, exact: true },
+    ],
+  },
 ];
 
 /**
@@ -73,6 +100,9 @@ type NavLinkSpec = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact: boolean;
+  /** Sub-paths a prefix link should *not* claim — Gallery lives under
+   *  /admin/pages but has its own entry, so Pages shouldn't light up for it. */
+  except?: string[];
   badge?: number;
 };
 
@@ -87,7 +117,10 @@ function NavLink({
   pathname: string;
   onClick: () => void;
 }) {
-  const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+  const active = link.exact
+    ? pathname === link.href
+    : pathname.startsWith(link.href) &&
+      !link.except?.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   return (
     <Link
       href={link.href}
@@ -161,9 +194,12 @@ export function AdminNav({
   // While the admin is on the Submissions page the list is, by definition,
   // read — don't flash the old count until the poll catches up.
   const badgeCount = onSubmissions ? 0 : unread;
-  const secondary = SECONDARY.map((link) =>
-    link.href === "/admin/submissions" ? { ...link, badge: badgeCount } : link
-  );
+  const navSections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    links: section.links.map((link) =>
+      link.href === "/admin/submissions" ? { ...link, badge: badgeCount } : link
+    ),
+  }));
 
   // `/admin/content/<type>` and everything nested under it.
   const activeType = pathname.startsWith("/admin/content/")
@@ -262,18 +298,21 @@ export function AdminNav({
             footer stays pinned however long the tree gets. */}
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-3 pb-4 pt-3 lg:pt-0">
           <nav className="flex flex-col gap-1">
-            {PRIMARY.map((link) => (
-              <NavLink key={link.href} link={link} pathname={pathname} onClick={close} />
-            ))}
+            <NavLink link={DASHBOARD} pathname={pathname} onClick={close} />
           </nav>
 
-          <nav className="flex flex-col gap-1 border-t border-border pt-3">
-            {secondary.map((link) => (
-              <NavLink key={link.href} link={link} pathname={pathname} onClick={close} />
-            ))}
-          </nav>
+          {navSections.map((section) => (
+            <nav key={section.heading} className="flex flex-col gap-1 border-t border-border pt-3">
+              <p className="px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                {section.heading}
+              </p>
+              {section.links.map((link) => (
+                <NavLink key={link.href} link={link} pathname={pathname} onClick={close} />
+              ))}
+            </nav>
+          ))}
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 border-t border-border pt-3">
             <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
               Every content type
             </p>
