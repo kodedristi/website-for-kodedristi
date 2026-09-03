@@ -1,0 +1,1668 @@
+import { keyOfIcon } from "@/lib/content/icons";
+import { solutions } from "@/lib/data/solutions";
+import { courses } from "@/lib/data/courses";
+import { products } from "@/lib/data/products";
+import { navGroups } from "@/lib/data/nav";
+import {
+  testimonials,
+  techStack,
+  deliveryApproach,
+  leadership,
+  stats,
+  articles,
+  partners,
+} from "@/lib/data/content";
+
+export type ContentItem<TData = Record<string, unknown>> = {
+  id: number;
+  type: string;
+  slug: string | null;
+  data: TData;
+  position: number;
+  published: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type FieldKind =
+  | "text"
+  | "textarea"
+  | "url"
+  | "select"
+  | "icon"
+  | "tone"
+  | "list"
+  | "json"
+  | "check"
+  | "image";
+
+export type ContentField = {
+  key: string;
+  label: string;
+  kind: FieldKind;
+  required?: boolean;
+  options?: string[];
+  /**
+   * For `select`: fill `options` from the live slugs of another content type
+   * instead of hardcoding them, resolved server-side before the editor
+   * renders. Without this a dropdown that points at user-created rows — "which
+   * gallery does this photo belong to" — would freeze at whatever list existed
+   * when the schema was written, and adding a gallery in the admin would leave
+   * its photos unassignable.
+   */
+  optionsFrom?: string;
+  /** Display labels for `options`, keyed by value. A slug is what has to be
+   *  stored, but it is not what an admin should have to read. */
+  optionLabels?: Record<string, string>;
+  placeholder?: string;
+  helper?: string;
+};
+
+export type ContentSchema = {
+  type: string;
+  label: string;
+  singular: string;
+  isSingleton?: boolean;
+  singletonSlug?: string;
+  titleField: string;
+  subtitleField?: string;
+  iconField?: string;
+  fields: ContentField[];
+  fallback?: () => SeedRow[];
+};
+
+export type SeedRow = { slug: string; data: Record<string, unknown> };
+
+// ---------------------------------------------------------------------------
+// Data shapes stored inside content_items.data
+// ---------------------------------------------------------------------------
+
+export type SolutionData = {
+  name: string;
+  tagline: string;
+  /** Showcase-card artwork. Empty until an image is uploaded; the card
+      reserves the space either way so adding one shifts nothing. */
+  image?: string;
+  icon: string;
+  accent: "blue" | "green";
+  problem: string;
+  approach: string;
+  deliverables: string[];
+  timeline: string;
+  tags: string[];
+  proof: string;
+};
+
+export type CourseData = {
+  name: string;
+  summary: string;
+  /** Showcase-card artwork — see SolutionData.image. */
+  image?: string;
+  level: "Beginner" | "Intermediate" | "Advanced";
+  duration: string;
+  format: string;
+  curriculum: string[];
+  prerequisites: string;
+  fee: string;
+  nextStartDate: string;
+  instructor: string;
+  outcomes: string[];
+};
+
+export type ProductData = {
+  name: string;
+  tagline: string;
+  /** Showcase-card artwork — see SolutionData.image. */
+  image?: string;
+  icon: string;
+  accent: "blue" | "green";
+  description: string;
+  features: string[];
+  audience: string;
+};
+
+export type ArticleData = {
+  title: string;
+  excerpt: string;
+  /** Showcase-card artwork — see SolutionData.image. */
+  image?: string;
+  category: string;
+  date: string;
+  readTime: string;
+  body: string[];
+};
+
+export type TestimonialData = {
+  quote: string;
+  name: string;
+  role: string;
+  /** 9:16 clip recorded by the client. Optional — without it the card falls
+   *  back to the written quote, so the rail never shows a broken player. */
+  videoUrl?: string;
+  /** First frame shown before playback. Strongly recommended: without it the
+   *  card is blank until the video buffers. */
+  posterUrl?: string;
+};
+/**
+ * One organisation on the "Trusted By Leading Organizations" wall.
+ *
+ * `logo` is optional on purpose: a partner can be listed the day the
+ * agreement is signed rather than the day their logo file turns up, and the
+ * card sets the name as a wordmark until it does. `alt` overrides the
+ * accessible name when the mark says something the row's `name` does not.
+ */
+export type PartnerData = {
+  name: string;
+  logo?: string;
+  alt?: string;
+  url?: string;
+};
+export type TeamMemberData = {
+  name: string;
+  role: string;
+  bio: string;
+  /** Headshot for the team showcase card — see SolutionData.image. */
+  image?: string;
+  /**
+   * Optional second portrait that cross-fades in on hover — the candid to the
+   * first photo's formal one. Entirely optional: a member with only one photo
+   * gets a slow push-in instead, so the grid never depends on every person
+   * having sat for two shots.
+   */
+  hoverImage?: string;
+  leadership?: boolean;
+};
+export type StatData = { value: string; label: string };
+export type TechData = { name: string };
+export type DeliveryStepData = { title: string; description: string };
+export type ValueData = { title: string; description: string };
+export type CapabilityData = { label: string };
+export type PerkData = { title: string; description: string };
+export type RoleData = { title: string; type: string };
+export type PartnerBenefitData = { title: string; description: string };
+export type ProcessStepData = { title: string; description: string };
+export type FaqData = { q: string; a: string; group: "learn" | "products" };
+export type ContactDetailData = { icon: string; label: string; value: string; href?: string };
+export type HackathonHighlightData = { icon: string; label: string };
+export type HackathonTrackData = { title: string; description: string };
+export type HackathonTimelineData = { label: string; detail: string };
+/**
+ * A delivered project, told the same way every time.
+ *
+ * The six narrative fields are fixed and in order: problem, strategy, build,
+ * features, stack, result. That is the whole point of the type — a case
+ * study that picks its own structure is a brochure, and a reader comparing
+ * three of them cannot. Any section left empty is skipped on the page rather
+ * than printed as an empty heading, so a half-written study still reads.
+ */
+export type ProjectData = {
+  name: string;
+  /** One line under the name, on the card and at the top of the study. */
+  tagline: string;
+  /** Card artwork. The grid reserves the well either way. */
+  image?: string;
+  client?: string;
+  industry?: string;
+  year?: string;
+  /** Live site, if there is one to link. */
+  url?: string;
+  businessProblem: string;
+  productStrategy: string;
+  designDevelopment: string;
+  keyFeatures: string[];
+  techStack: string[];
+  businessResult: string;
+};
+/**
+ * One signed industry-academia agreement.
+ *
+ * The image is the artefact — a photo of the signing or a scan of the
+ * document — and `caption` is what surfaces over it on hover. Caption is the
+ * only field that must earn its place: it says what the agreement actually
+ * lets the two sides do, which is the part a logo wall can never carry.
+ */
+/**
+ * One photo collection — rendered as a card on the homepage and as its own
+ * page at `/gallery/<slug>`.
+ *
+ * The homepage shows these two-up, so the copy is written to be read at a
+ * glance: a name, one line saying what the collection is, and a cover image.
+ * Everything longer belongs on the gallery's own page.
+ */
+export type GalleryData = {
+  name: string;
+  /** The "what is it" line under the title on the homepage card. */
+  description: string;
+  /** The image representing the collection on the homepage card. */
+  coverImage: string;
+  /** Overrides the "View Gallery" button label when a collection wants its
+   *  own wording. */
+  ctaLabel?: string;
+};
+
+/**
+ * One photo inside a gallery.
+ *
+ * `gallery` holds the owning gallery's slug rather than a numeric id: slugs
+ * are what the CMS already keys rows by and what the URL uses, so a photo
+ * survives its gallery being edited, and the admin dropdown can be built
+ * from live gallery slugs with no join.
+ *
+ * `title` and `description` are what the card reveals — on hover on a
+ * desktop pointer, and permanently on a touch screen, where there is no
+ * hover to reveal them with.
+ */
+export type GalleryPhotoData = {
+  gallery: string;
+  image: string;
+  title: string;
+  description?: string;
+};
+export type MouPartnershipData = {
+  institution: string;
+  /** Photo of the signing, or the document itself. */
+  image?: string;
+  /** Revealed over the image on hover / focus. One or two sentences. */
+  caption: string;
+  /** Free text — "Signed 2026", "Renewed 2025". */
+  signedOn?: string;
+};
+export type LaganiHighlightData = { icon: string; label: string };
+export type LaganiFocusData = { title: string; description: string };
+export type LaganiProcessData = { label: string; detail: string };
+export type LaganiPortfolioData = {
+  name: string;
+  /** The company's mark. Optional — the tile sets the name as a wordmark
+   *  instead, so a company can be listed before its logo arrives. */
+  logo?: string;
+  /** Round or status, printed under the mark. Free text. */
+  stage?: string;
+  url?: string;
+};
+export type HackathonPartnerData = {
+  name: string;
+  /** The partner's own mark. Optional: without one the tile sets the name as
+   *  a wordmark instead, so a partner can be listed the day the agreement is
+   *  signed rather than the day their logo file turns up. */
+  logo?: string;
+  /** Sponsorship level, printed under the mark. Free text — every hackathon
+   *  invents its own ladder. Empty prints nothing. */
+  tier?: string;
+  /** The partner's site. Given one, the whole tile becomes the link. */
+  url?: string;
+};
+export type NavData = { groups: typeof navGroups };
+export type PageHeroData = { eyebrow: string; title: string; description: string; eyebrowTone?: "blue" | "green" };
+export type SectionHeadingData = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  eyebrowTone?: "blue" | "green";
+};
+export type SlideshowImageData = {
+  imageUrl: string;
+  mobileImageUrl?: string;
+  displayOrder: number;
+  /** Which way the copy reads over this particular picture. Chosen per image
+   *  because a bright shot and a dark one cannot share one text colour. */
+  textTone?: "light" | "dark";
+  /** Optional wash, tinted to match textTone, for images the copy struggles
+   *  on. "0" leaves the photograph untouched. */
+  overlayOpacity?: string;
+};
+/** Both programme banners take the same slides; the aliases keep each call
+ *  site reading in its own vocabulary. */
+export type HackathonSlideshowData = SlideshowImageData;
+export type LaganiSlideshowData = SlideshowImageData;
+export type HomeHeroData = {
+  eyebrow: string;
+  title: string;
+  paragraph: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel: string;
+  secondaryHref: string;
+  tertiaryLabel: string;
+  tertiaryHref: string;
+};
+export type HomeHeroSlideData = {
+  /** Short name on the rail at the foot of the hero. */
+  label: string;
+  title: string;
+  paragraph: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+export type HomeTrustData = { label: string };
+export type HomeFlagshipData = {
+  badge: string;
+  title: string;
+  description: string;
+  point1: string;
+  point2: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+export type HomeLaganiData = {
+  badge: string;
+  title: string;
+  description: string;
+  point1: string;
+  point2: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+export type HomeFinalCtaData = {
+  title: string;
+  description: string;
+  primaryLabel: string;
+  primaryHref: string;
+  secondaryLabel: string;
+  secondaryHref: string;
+};
+
+/**
+ * The facts about the company that appear in more than one place.
+ *
+ * Phone number, address and opening hours were previously written into the
+ * footer, the contact aside and the Organization JSON-LD separately, which
+ * is three edits for one change and three chances to leave one behind. They
+ * live here once and every surface reads from them.
+ *
+ * `phoneHref` is stored rather than derived: the printed number is local
+ * ("9851362001") while the link has to carry the country code for a phone to
+ * dial it, and inferring one from the other guesses wrong the moment a
+ * second number or a landline is added.
+ */
+export type SiteSettingsData = {
+  companyName: string;
+  tagline: string;
+  phone: string;
+  phoneHref: string;
+  email: string;
+  address: string;
+  officeHours: string;
+  officeDays?: string;
+  footerNote?: string;
+};
+
+/**
+ * Per-page search metadata.
+ *
+ * One row per page, keyed by the same page slug the page hero uses, so the
+ * two are edited side by side in the admin. Every field is optional: an
+ * empty one falls back to what the page already computes, which is what
+ * keeps a page that nobody has filled in from losing the title it had.
+ */
+export type PageSeoData = {
+  /** What the page is called in the admin — never rendered on the site. */
+  pageName: string;
+  /** The route this row describes, e.g. "/about". Used for the canonical URL
+   *  and to build the admin's "view page" link. */
+  path: string;
+  seoTitle?: string;
+  metaDescription?: string;
+  canonicalUrl?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogImageAlt?: string;
+  /** Checked keeps the page out of search results. */
+  noIndex?: boolean;
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+export function slugify(input: string): string {
+  return (
+    input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "item"
+  );
+}
+
+function serializeSolutions(): SeedRow[] {
+  return solutions.map((s) => ({
+    slug: s.slug,
+    data: {
+      name: s.name,
+      tagline: s.tagline,
+      icon: keyOfIcon(s.icon),
+      accent: s.accent,
+      problem: s.problem,
+      approach: s.approach,
+      deliverables: s.deliverables,
+      timeline: s.timeline,
+      tags: s.tags,
+      proof: s.proof,
+    },
+  }));
+}
+
+function serializeCourses(): SeedRow[] {
+  return courses.map((c) => ({ slug: c.slug, data: { ...c } }));
+}
+
+function serializeProducts(): SeedRow[] {
+  return products.map((p) => ({
+    slug: p.slug,
+    data: {
+      name: p.name,
+      tagline: p.tagline,
+      icon: keyOfIcon(p.icon),
+      accent: p.accent,
+      description: p.description,
+      features: p.features,
+      audience: p.audience,
+    },
+  }));
+}
+
+function serializeArticles(): SeedRow[] {
+  return articles.map((a) => ({ slug: a.slug, data: { ...a } }));
+}
+
+function serializeTestimonials(): SeedRow[] {
+  return testimonials.map((t) => ({ slug: slugify(t.name), data: { ...t } }));
+}
+
+function serializePartners(): SeedRow[] {
+  return partners.map((p) => ({ slug: slugify(p.name), data: { ...p } }));
+}
+
+function serializeTeam(): SeedRow[] {
+  const extraTeam = [
+    { name: "Bipan Pandey", role: "Graphics Designer", bio: "Crafts visual identity and graphics across KodeDristi's brand, products and events." },
+    { name: "Pratima Khanal", role: "Marketing & PR Lead", bio: "Owns brand communications, community and public relations for KodeDristi." },
+    { name: "Rishab Dev Chudali", role: "Flutter Developer", bio: "Builds cross-platform mobile applications for clients and in-house products." },
+    { name: "Sanjish Thapa Magar", role: "Backend Developer", bio: "Designs and ships reliable APIs and backend services for client systems." },
+    { name: "Rakesh Singh", role: "QA Engineer", bio: "Keeps every release verified across automated and manual testing." },
+    { name: "Anish Basnet", role: "Legal & Accounting", bio: "Handles legal compliance, contracts and financial operations." },
+    { name: "Abiskar Dahal", role: "Database Engineer", bio: "Designs data models and keeps systems consistent and performant at scale." },
+    { name: "Sujal Panday", role: "Frontend Developer", bio: "Builds polished, accessible front-end experiences for client applications." },
+    { name: "Sunny Jha", role: "IT Support Engineer", bio: "Keeps infrastructure, devices and internal tooling running smoothly." },
+  ];
+  return [
+    ...leadership.map((p) => ({
+      slug: slugify(p.name),
+      data: { name: p.name, role: p.role, bio: p.bio, leadership: true },
+    })),
+    ...extraTeam.map((p) => ({
+      slug: slugify(p.name),
+      data: { ...p, leadership: false },
+    })),
+  ];
+}
+
+function serializeStats(): SeedRow[] {
+  return stats.map((s) => ({ slug: slugify(s.label), data: { ...s } }));
+}
+
+function serializeTech(): SeedRow[] {
+  return techStack.map((t) => ({ slug: slugify(t.name), data: { ...t } }));
+}
+
+function serializeDelivery(): SeedRow[] {
+  return deliveryApproach.map((d) => ({ slug: slugify(d.title), data: { ...d } }));
+}
+
+const values = [
+  { title: "Ship what we promise", description: "Every engagement ends in something running in production, not a slide deck." },
+  { title: "Stay close to the problem", description: "We model your real workflow before we write a line of code." },
+  { title: "Teach as we build", description: "Our courses and client work run on the same standard — no separate 'training-grade' shortcuts." },
+  { title: "Grow people, not just projects", description: "We invest in engineers who stay curious, on client work and in the classroom." },
+];
+
+const capabilities = [
+  "Web & mobile product engineering",
+  "SaaS architecture & multi-tenant systems",
+  "Applied AI, automation & LLM integration",
+  "Cloud infrastructure & DevOps",
+  "Custom enterprise software",
+  "Technical training & curriculum design",
+];
+
+const perks = [
+  { title: "Real client work", description: "Ship to production from week one — no bench time on toy projects." },
+  { title: "Teach what you build", description: "Engineers can instruct in our course programs alongside client work." },
+  { title: "Small, senior teams", description: "Work directly with leadership — no layers between you and the decision." },
+  { title: "Kathmandu-based, remote-friendly", description: "Hybrid setup with flexibility for the right role." },
+];
+
+const openRoles = [
+  { title: "Full-Stack Engineer (Next.js / Laravel)", type: "Full-time · Kathmandu" },
+  { title: "AI/ML Engineer", type: "Full-time · Kathmandu / Remote" },
+  { title: "Flutter Developer", type: "Full-time · Kathmandu" },
+  { title: "Course Instructor — Cloud & DevOps", type: "Part-time · Remote" },
+];
+
+const partnerBenefits = [
+  { title: "Curriculum collaboration", description: "Co-develop course tracks aligned with your institution's programs." },
+  { title: "Joint programs", description: "Co-branded bootcamps, hackathon sponsorship and guest instruction." },
+  { title: "Hiring pipeline", description: "Direct access to graduating cohorts for internships and hiring." },
+];
+
+const processSteps = [
+  { title: "Apply", description: "Tell us about your background and the course you want." },
+  { title: "Reserve your seat", description: "Confirm enrollment with a deposit — seats are limited per cohort." },
+  { title: "Orientation", description: "Get your schedule, materials access and instructor introduction." },
+  { title: "Start learning", description: "Live sessions, weekly labs and a capstone project." },
+];
+
+const faqs: { q: string; a: string; group: "learn" | "products" }[] = [
+  { q: "Are classes live or self-paced?", a: "All KodeDristi courses are live, cohort-based sessions with a fixed schedule — not pre-recorded content.", group: "learn" },
+  { q: "What happens if I miss a session?", a: "Every live session is recorded and shared with enrolled students within 24 hours.", group: "learn" },
+  { q: "Is there a certificate?", a: "Yes — students who complete the capstone project receive a KodeDristi completion certificate.", group: "learn" },
+  { q: "Can my company sponsor a cohort seat?", a: "Yes, reach out via the enquiry form below and we'll set up corporate billing.", group: "learn" },
+  { q: "Can these products be white-labelled?", a: "Yes — Billing Software, Accounting Software and LMS all support white-label deployment for partners.", group: "products" },
+  { q: "Do you offer a trial?", a: "Every product has a guided demo; trial access is arranged during your first call.", group: "products" },
+  { q: "Can you build something similar for us?", a: "Yes — reach out via the contact card on any product page to scope a custom build.", group: "products" },
+];
+
+const contactDetails = [
+  { icon: "phone", label: "Phone", value: "9851362001", href: "tel:+9779851362001" },
+  { icon: "mail", label: "Email", value: "hello@kodedristi.com", href: "mailto:hello@kodedristi.com" },
+  { icon: "map-pin", label: "Location", value: "Kathmandu, Nepal" },
+  { icon: "clock", label: "Office Hours", value: "10:00 AM – 6:00 PM" },
+];
+
+const hackathonHighlights = [
+  { icon: "users", label: "Teams of 2–4" },
+  { icon: "calendar", label: "48-hour build" },
+  { icon: "trophy", label: "Cash & prizes" },
+  { icon: "award", label: "Hiring pipeline" },
+];
+
+const hackathonTracks = [
+  { title: "Applied AI", description: "LLM applications, computer vision or predictive models solving a real problem." },
+  { title: "Civic & Social Impact", description: "Software addressing an education, health or public-service challenge in Nepal." },
+  { title: "Open Innovation", description: "Any product idea — web, mobile or AI — judged on execution and impact." },
+];
+
+const hackathonTimeline = [
+  { label: "Registrations open", detail: "Teams of 2–4 register online" },
+  { label: "Kickoff & problem statements", detail: "Live opening ceremony and track briefs" },
+  { label: "48-hour build window", detail: "Mentors on call throughout" },
+  { label: "Demos & judging", detail: "Live pitches to the judging panel" },
+  { label: "Awards ceremony", detail: "Winners announced, prizes and offers extended" },
+];
+
+/* Placeholder programme copy: structure the admin can edit, deliberately
+   free of figures. Cheque sizes and fund terms are claims about the
+   business, and inventing them here would publish them as fact. */
+const laganiHighlights = [
+  { icon: "sparkles", label: "Pre-seed & seed" },
+  { icon: "workflow", label: "Engineering included" },
+  { icon: "users", label: "Hands-on, not passive" },
+  { icon: "globe", label: "Built for Nepal" },
+];
+
+const laganiFocus = [
+  { title: "Software-first businesses", description: "Companies where the software is the business rather than a side effect of it — SaaS, marketplaces and platforms." },
+  { title: "Applied AI", description: "Teams using AI to take real cost or time out of a workflow, with a customer already feeling that pain today." },
+  { title: "Digital infrastructure for Nepal", description: "Payments, logistics, education and health tooling built for how business actually runs here." },
+];
+
+const laganiProcess = [
+  { label: "Send us the deck", detail: "A short deck, a working demo, or a clear write-up of the problem — whichever you already have." },
+  { label: "First conversation", detail: "A working session on the product and the market, not a pitch performance." },
+  { label: "Technical and commercial review", detail: "We look at the build, the numbers and the team together, and tell you what we find." },
+  { label: "Terms", detail: "A written offer covering capital, engineering support and what each side commits to." },
+  { label: "Build together", detail: "Funding lands and our engineers start work alongside your team." },
+];
+
+const pageHeroes: { slug: string; data: PageHeroData }[] = [
+  { slug: "about", data: { eyebrow: "Company", title: "Software and skills, built together", description: "KodeDristi is a Kathmandu-based software company that builds client products and runs applied IT courses from the same engineering bench — #WithYouEveryStep." } },
+  { slug: "team", data: { eyebrow: "Company", title: "Team", description: "A small, senior bench across engineering, design and instruction — the same people on your project are the ones teaching our courses." } },
+  { slug: "careers", data: { eyebrow: "Company", title: "Careers", description: "We hire in small numbers, for real ownership. If you'd rather ship than sit in standups, this is that kind of team." } },
+  { slug: "partners", data: { eyebrow: "Partners", title: "Built with our partners, not just for them", description: "KodeDristi works with universities, training institutes and businesses to expand access to quality software education and delivery." } },
+  { slug: "learn", data: { eyebrow: "Learn", title: "IT courses built from real delivery work", description: "Six live, cohort-based programs taught by the same engineers who ship KodeDristi's client projects.", eyebrowTone: "green" } },
+  { slug: "insights", data: { eyebrow: "Knowledge", title: "News & Insights", description: "Notes from our engineering and delivery teams — practical, not promotional." } },
+  { slug: "products", data: { eyebrow: "Products", title: "Products", description: "In-house software KodeDristi builds, ships and maintains — proof of the same engineering standard we bring to client work." } },
+  { slug: "solutions", data: { eyebrow: "Solutions", title: `${solutions.length} delivery tracks. One accountable team.`, description: "Every solution below follows the same disciplined process — a clear problem statement, a defined approach, concrete deliverables and a realistic timeline." } },
+  { slug: "contact", data: { eyebrow: "Contact", title: "Let's talk about what you're building", description: "Whether it's a project, a course seat, or a partnership — tell us the details and we'll follow up within one business day." } },
+  { slug: "projects", data: { eyebrow: "Work", title: "Projects", description: "Everything we have shipped, with the reasoning behind it — the problem, the strategy, the build and what it changed for the business." } },
+  { slug: "dristi-lagani", data: { eyebrow: "Investment Program", title: "Dristi Lagani", description: "Capital and an engineering team for early-stage Nepali software companies — we invest, then we build alongside you.", eyebrowTone: "green" } },
+  { slug: "hackathon", data: { eyebrow: "Flagship Program", title: "National AI Hackathon", description: "KodeDristi's flagship national competition for student and professional builders — 48 hours, real mentors, real prizes, and a direct line to our hiring and partner network." } },
+];
+
+const sectionHeadings: { slug: string; data: SectionHeadingData }[] = [
+  { slug: "academia-partnership", data: { eyebrow: "Academia", title: "Industry Academia Partnership", description: "Formal agreements with universities and colleges — shared curriculum, internships and live project work, so students graduate having built something real.", eyebrowTone: "blue" } },
+  { slug: "gallery", data: { eyebrow: "Gallery", title: "Moments from the programmes", description: "A running look at the people and the work — cohorts, sessions and the days that do not make it into a case study.", eyebrowTone: "blue" } },
+  { slug: "projects-overview", data: { eyebrow: "Work", title: "Our remarkable projects", description: "Six of the products we have designed, built and shipped — each one told the same way, from the business problem to the result.", eyebrowTone: "blue" } },
+  { slug: "lagani-portfolio", data: { eyebrow: "Portfolio", title: "Companies we have backed", description: "Every company below took capital and engineering from KodeDristi.", eyebrowTone: "green" } },
+  { slug: "hackathon-partners", data: { eyebrow: "Partners", title: "Trusted By Leading Organizations", description: "Institutions, sponsors and community partners we build, teach and run programmes with.", eyebrowTone: "green" } },
+  { slug: "solutions-overview", data: { eyebrow: "Solutions", title: `${solutions.length} ways we help you ship`, description: "From a single web app to a full AI-driven platform — pick a starting point, or let us scope the right mix." } },
+  { slug: "courses-overview", data: { eyebrow: "Learn", title: "Applied IT courses, taught by practitioners", description: "Six live cohort-based programs — built from the same work our engineering team ships for clients.", eyebrowTone: "green" } },
+  { slug: "tech-delivery", data: { eyebrow: "Technology", title: "A stack chosen for reliability, not resume-padding", description: "" } },
+  { slug: "team-overview", data: { eyebrow: "Leadership", title: "The team behind every delivery", description: "A small, senior team — led by our CEO — that stays close to every engagement." } },
+  { slug: "testimonials", data: { eyebrow: "Testimonials", title: "What our clients say", description: "" } },
+];
+
+const homeHero: SeedRow = {
+  slug: "main",
+  data: {
+    eyebrow: "#WithYouEveryStep",
+    title: "One platform for software, AI and the people who build them.",
+    paragraph:
+      "KodeDristi designs and ships web, mobile, SaaS and AI products for growing businesses — and trains the next generation of engineers to build them. 10+ projects delivered, 4+ institutional partners.",
+    primaryLabel: "Start a Project",
+    primaryHref: "/contact",
+    secondaryLabel: "Explore Programs",
+    secondaryHref: "/learn",
+    tertiaryLabel: "Register for the National AI Hackathon",
+    tertiaryHref: "/hackathon",
+  },
+};
+
+/* The three things KodeDristi sells, one per hero slide. Seeded from copy the
+   site already makes elsewhere rather than invented. */
+const homeHeroSlides = [
+  {
+    label: "Build with us",
+    title: "One platform for software, AI and the people who build them.",
+    paragraph:
+      "KodeDristi designs and ships web, mobile, SaaS and AI products for growing businesses — and trains the next generation of engineers to build them.",
+    ctaLabel: "Start a Project",
+    ctaHref: "/contact",
+  },
+  {
+    label: "Learn with us",
+    title: "Applied IT courses, taught by the engineers who ship.",
+    paragraph:
+      "Live, cohort-based programs built from the same delivery work our clients pay for. No theory-only classrooms.",
+    ctaLabel: "Explore Programs",
+    ctaHref: "/learn",
+  },
+  {
+    label: "Grow with us",
+    title: "Capital and an engineering team for what you are building.",
+    paragraph:
+      "Dristi Lagani backs early-stage Nepali software companies — the funding buys runway and the build at the same time.",
+    ctaLabel: "Pitch to Dristi Lagani",
+    ctaHref: "/dristi-lagani",
+  },
+];
+
+const homeTrust: SeedRow = {
+  slug: "main",
+  data: { label: "Trusted by growing businesses and academic partners across Nepal" },
+};
+
+const homeFlagship: SeedRow = {
+  slug: "main",
+  data: {
+    badge: "Flagship Program",
+    title: "National AI Hackathon 2026",
+    description:
+      "KodeDristi's flagship national competition for student and professional builders — 48 hours, real mentors, real prizes, and a direct line to our hiring and partner network.",
+    point1: "Open to teams of 2–4",
+    point2: "Registrations open now",
+    ctaLabel: "Register for Hackathon",
+    ctaHref: "/hackathon",
+  },
+};
+
+const homeLagani: SeedRow = {
+  slug: "main",
+  data: {
+    badge: "Investment Program",
+    title: "Dristi Lagani",
+    description:
+      "KodeDristi backs early-stage Nepali software companies with capital and an engineering team — so the funding buys runway and the build at the same time.",
+    point1: "Pre-seed and seed",
+    point2: "Open year-round",
+    ctaLabel: "Pitch to Dristi Lagani",
+    ctaHref: "/dristi-lagani",
+  },
+};
+
+const homeFinalCta: SeedRow = {
+  slug: "main",
+  data: {
+    title: "Let's architect your digital future.",
+    description:
+      "Tell us what you're trying to solve. We'll respond within one business day with next steps — no obligation.",
+    primaryLabel: "Start a Project",
+    primaryHref: "/contact",
+    secondaryLabel: "Explore Programs",
+    secondaryHref: "/learn",
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Schema registry
+// ---------------------------------------------------------------------------
+
+export const CONTENT_SCHEMAS: ContentSchema[] = [
+  {
+    type: "solution",
+    label: "Solutions",
+    singular: "Solution",
+    titleField: "name",
+    subtitleField: "tagline",
+    iconField: "icon",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "tagline", label: "Tagline", kind: "text", required: true },
+      { key: "image", label: "Card image", kind: "image", helper: "Shown in the Solutions showcase grid on the home page. Leave empty and the card keeps the space reserved." },
+      { key: "icon", label: "Icon", kind: "icon" },
+      { key: "accent", label: "Accent color", kind: "tone" },
+      { key: "problem", label: "Problem statement", kind: "textarea" },
+      { key: "approach", label: "Approach", kind: "textarea" },
+      { key: "deliverables", label: "Deliverables (one per line)", kind: "list" },
+      { key: "timeline", label: "Timeline", kind: "text" },
+      { key: "tags", label: "Tags (one per line)", kind: "list" },
+      { key: "proof", label: "Proof", kind: "textarea" },
+    ],
+    fallback: serializeSolutions,
+  },
+  {
+    type: "course",
+    label: "Courses",
+    singular: "Course",
+    titleField: "name",
+    subtitleField: "summary",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "summary", label: "Summary", kind: "textarea" },
+      { key: "image", label: "Card image", kind: "image", helper: "Shown in the Learn showcase grid on the home page. Leave empty and the card keeps the space reserved." },
+      { key: "level", label: "Level", kind: "select", options: ["Beginner", "Intermediate", "Advanced"] },
+      { key: "duration", label: "Duration", kind: "text" },
+      { key: "format", label: "Format", kind: "text" },
+      { key: "curriculum", label: "Curriculum (one per line)", kind: "list" },
+      { key: "prerequisites", label: "Prerequisites", kind: "text" },
+      { key: "fee", label: "Fee", kind: "text" },
+      { key: "nextStartDate", label: "Next start date", kind: "text" },
+      { key: "instructor", label: "Instructor", kind: "text" },
+      { key: "outcomes", label: "Outcomes (one per line)", kind: "list" },
+    ],
+    fallback: serializeCourses,
+  },
+  {
+    type: "product",
+    label: "Products",
+    singular: "Product",
+    titleField: "name",
+    subtitleField: "tagline",
+    iconField: "icon",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "tagline", label: "Tagline", kind: "text", required: true },
+      { key: "image", label: "Card image", kind: "image", helper: "Shown on the showcase card. Leave empty and the card keeps the space reserved." },
+      { key: "icon", label: "Icon", kind: "icon" },
+      { key: "accent", label: "Accent color", kind: "tone" },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "features", label: "Features (one per line)", kind: "list" },
+      { key: "audience", label: "Audience", kind: "text" },
+    ],
+    fallback: serializeProducts,
+  },
+  {
+    type: "article",
+    label: "Insights / Articles",
+    singular: "Article",
+    titleField: "title",
+    subtitleField: "category",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "excerpt", label: "Excerpt", kind: "textarea" },
+      { key: "image", label: "Card image", kind: "image", helper: "Shown on the showcase card. Leave empty and the card keeps the space reserved." },
+      { key: "category", label: "Category", kind: "text" },
+      { key: "date", label: "Date (YYYY-MM-DD)", kind: "text" },
+      { key: "readTime", label: "Read time", kind: "text" },
+      { key: "body", label: "Body (one paragraph per line)", kind: "list" },
+    ],
+    fallback: serializeArticles,
+  },
+  {
+    type: "testimonial",
+    label: "Testimonials",
+    singular: "Testimonial",
+    titleField: "name",
+    subtitleField: "role",
+    fields: [
+      { key: "quote", label: "Quote", kind: "textarea", required: true },
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "role", label: "Role", kind: "text" },
+      {
+        key: "videoUrl",
+        label: "Video URL (9:16)",
+        kind: "url",
+        placeholder: "https://…/anjali.mp4",
+        helper:
+          "Vertical 9:16 MP4 (H.264/AAC) recorded by the client. Leave empty to show the written quote instead.",
+      },
+      {
+        key: "posterUrl",
+        label: "Video poster image",
+        kind: "url",
+        placeholder: "https://…/anjali-poster.jpg",
+        helper: "Shown before the video loads. Use a 9:16 frame from the clip.",
+      },
+    ],
+    fallback: serializeTestimonials,
+  },
+  {
+    type: "partner",
+    label: "Trusted organizations",
+    singular: "Organization",
+    titleField: "name",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      {
+        key: "logo",
+        label: "Logo",
+        kind: "image",
+        helper:
+          "Shown centred inside an equal-size card. Any aspect ratio is fine — the logo is fitted, never stretched or cropped. Leave empty to print the name as a wordmark instead.",
+      },
+      {
+        key: "alt",
+        label: "Logo alt text",
+        kind: "text",
+        helper: "Describes the logo for screen readers. Defaults to the name above.",
+      },
+      { key: "url", label: "Website", kind: "url", placeholder: "https://example.com" },
+    ],
+    fallback: serializePartners,
+  },
+  {
+    type: "team-member",
+    label: "Team",
+    singular: "Team member",
+    titleField: "name",
+    subtitleField: "role",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "role", label: "Role", kind: "text" },
+      { key: "bio", label: "Bio", kind: "textarea" },
+      { key: "image", label: "Card image", kind: "image", helper: "Portrait shown on the team card. Leave empty and the card falls back to the initial." },
+      { key: "hoverImage", label: "Hover image (optional)", kind: "image", helper: "A second portrait that cross-fades in when the card is hovered. Leave empty and the single photo gently pushes in instead." },
+      { key: "leadership", label: "Show in leadership sections", kind: "check" },
+    ],
+    fallback: serializeTeam,
+  },
+  {
+    type: "stat",
+    label: "Stats",
+    singular: "Stat",
+    titleField: "label",
+    fields: [
+      { key: "value", label: "Value (e.g. 10+)", kind: "text", required: true },
+      { key: "label", label: "Label", kind: "text", required: true },
+    ],
+    fallback: serializeStats,
+  },
+  {
+    type: "tech",
+    label: "Tech stack",
+    singular: "Tech",
+    titleField: "name",
+    fields: [{ key: "name", label: "Name", kind: "text", required: true }],
+    fallback: serializeTech,
+  },
+  {
+    type: "delivery-step",
+    label: "Delivery approach",
+    singular: "Step",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: serializeDelivery,
+  },
+  {
+    type: "value",
+    label: "Company values",
+    singular: "Value",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () => values.map((v) => ({ slug: slugify(v.title), data: { ...v } })),
+  },
+  {
+    type: "capability",
+    label: "Capabilities",
+    singular: "Capability",
+    titleField: "label",
+    fields: [{ key: "label", label: "Capability", kind: "text", required: true }],
+    fallback: () => capabilities.map((c) => ({ slug: slugify(c), data: { label: c } })),
+  },
+  {
+    type: "perk",
+    label: "Careers perks",
+    singular: "Perk",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () => perks.map((p) => ({ slug: slugify(p.title), data: { ...p } })),
+  },
+  {
+    type: "role",
+    label: "Open roles",
+    singular: "Role",
+    titleField: "title",
+    subtitleField: "type",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "type", label: "Type / location", kind: "text" },
+    ],
+    fallback: () => openRoles.map((r) => ({ slug: slugify(r.title), data: { ...r } })),
+  },
+  {
+    type: "partner-benefit",
+    label: "Partner benefits",
+    singular: "Benefit",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () =>
+      partnerBenefits.map((b) => ({ slug: slugify(b.title), data: { ...b } })),
+  },
+  {
+    type: "process-step",
+    label: "Enrollment steps",
+    singular: "Step",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () => processSteps.map((s) => ({ slug: slugify(s.title), data: { ...s } })),
+  },
+  {
+    type: "faq",
+    label: "FAQs",
+    singular: "FAQ",
+    titleField: "q",
+    fields: [
+      { key: "q", label: "Question", kind: "textarea", required: true },
+      { key: "a", label: "Answer", kind: "textarea" },
+      { key: "group", label: "Section", kind: "select", options: ["learn", "products"] },
+    ],
+    fallback: () => faqs.map((f) => ({ slug: slugify(f.q), data: { ...f } })),
+  },
+  {
+    type: "contact-detail",
+    label: "Contact details",
+    singular: "Detail",
+    titleField: "label",
+    iconField: "icon",
+    fields: [
+      { key: "icon", label: "Icon", kind: "icon" },
+      { key: "label", label: "Label", kind: "text", required: true },
+      { key: "value", label: "Value", kind: "text", required: true },
+      { key: "href", label: "Link (tel:/mailto:/URL)", kind: "url" },
+    ],
+    fallback: () => contactDetails.map((c) => ({ slug: slugify(c.label), data: { ...c } })),
+  },
+  {
+    type: "hackathon-highlight",
+    label: "Hackathon highlights",
+    singular: "Highlight",
+    titleField: "label",
+    iconField: "icon",
+    fields: [
+      { key: "icon", label: "Icon", kind: "icon" },
+      { key: "label", label: "Label", kind: "text", required: true },
+    ],
+    fallback: () =>
+      hackathonHighlights.map((h) => ({ slug: slugify(h.label), data: { ...h } })),
+  },
+  {
+    type: "hackathon-track",
+    label: "Hackathon tracks",
+    singular: "Track",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () => hackathonTracks.map((t) => ({ slug: slugify(t.title), data: { ...t } })),
+  },
+  {
+    type: "hackathon-timeline",
+    label: "Hackathon timeline",
+    singular: "Step",
+    titleField: "label",
+    fields: [
+      { key: "label", label: "Label", kind: "text", required: true },
+      { key: "detail", label: "Detail", kind: "text" },
+    ],
+    fallback: () =>
+      hackathonTimeline.map((t) => ({ slug: slugify(t.label), data: { ...t } })),
+  },
+  {
+    type: "project",
+    label: "Projects",
+    singular: "Project",
+    titleField: "name",
+    subtitleField: "client",
+    fields: [
+      { key: "name", label: "Project name", kind: "text", required: true },
+      { key: "tagline", label: "One-line summary", kind: "text", required: true },
+      { key: "image", label: "Card image", kind: "image", helper: "Shown on the projects grid and at the head of the case study." },
+      { key: "client", label: "Client", kind: "text" },
+      { key: "industry", label: "Industry", kind: "text", placeholder: "Logistics" },
+      { key: "year", label: "Year", kind: "text", placeholder: "2026" },
+      { key: "url", label: "Live site", kind: "url", placeholder: "https://…" },
+      { key: "businessProblem", label: "1. Business problem", kind: "textarea", helper: "What was costing the client time or money before you started." },
+      { key: "productStrategy", label: "2. Product strategy", kind: "textarea", helper: "What you decided to build, and why that rather than something else." },
+      { key: "designDevelopment", label: "3. Design and development", kind: "textarea", helper: "How it was designed and built — process, team, timeline." },
+      { key: "keyFeatures", label: "4. Key features", kind: "list", helper: "One per line." },
+      { key: "techStack", label: "5. Technology stack", kind: "list", helper: "One per line." },
+      { key: "businessResult", label: "6. Business result", kind: "textarea", helper: "What changed for the client. Use real figures only — an invented metric is a false claim about someone else's business." },
+    ],
+    /* Empty on purpose. A case study asserts what KodeDristi did for a named
+       client and what it produced; seeding placeholders would publish work
+       and results that never happened. The section hides until real projects
+       are added. */
+    fallback: () => [],
+  },
+  {
+    type: "gallery",
+    label: "Galleries",
+    singular: "Gallery",
+    titleField: "name",
+    subtitleField: "description",
+    iconField: "",
+    fields: [
+      { key: "name", label: "Gallery name", kind: "text", required: true, helper: "The heading on the homepage card, and the title of the gallery's own page." },
+      { key: "description", label: "What is it", kind: "textarea", required: true, helper: "One or two sentences describing the collection. Shown under the title on the homepage card." },
+      { key: "coverImage", label: "Cover image", kind: "image", required: true, helper: "The single image representing this gallery on the homepage." },
+      { key: "ctaLabel", label: "Button label (optional)", kind: "text", placeholder: "View Gallery" },
+    ],
+    /* Two seeded galleries, matching the site's two programmes. They carry
+       no cover image: a gallery is a claim that these photographs exist, and
+       inventing one would put a stock picture on the homepage under a real
+       programme's name. The card renders its image well empty until a real
+       photo is uploaded. */
+    fallback: () => [
+      {
+        slug: "hackathon",
+        data: {
+          name: "National AI Hackathon",
+          description:
+            "Photographs from the flagship national competition — the teams, the mentors, the judging and the closing ceremony.",
+          coverImage: "",
+        },
+      },
+      {
+        slug: "dristi-lagani",
+        data: {
+          name: "Dristi Lagani",
+          description:
+            "The investment programme in pictures — founder sessions, build weeks and the companies we have backed.",
+          coverImage: "",
+        },
+      },
+    ],
+  },
+  {
+    type: "gallery-photo",
+    label: "Gallery photos",
+    singular: "Photo",
+    titleField: "title",
+    subtitleField: "gallery",
+    iconField: "",
+    fields: [
+      {
+        key: "gallery",
+        label: "Gallery",
+        kind: "select",
+        required: true,
+        // Filled from the live `gallery` rows, so adding a gallery makes it
+        // selectable here immediately.
+        optionsFrom: "gallery",
+        helper: "Which gallery this photo belongs to.",
+      },
+      { key: "image", label: "Photo", kind: "image", required: true },
+      { key: "title", label: "What is it", kind: "text", required: true, helper: "Revealed over the photo on hover on desktop, and shown under it on mobile." },
+      { key: "description", label: "Description", kind: "textarea", helper: "Optional. Appears with the title — on hover on desktop, always on mobile." },
+    ],
+    /* Empty on purpose: these are photographs of real events, and there is
+       none to invent. Each gallery hides until it has real photos. */
+    fallback: () => [],
+  },
+  {
+    type: "mou-partnership",
+    label: "Industry academia MoUs",
+    singular: "MoU",
+    titleField: "institution",
+    subtitleField: "signedOn",
+    fields: [
+      { key: "institution", label: "Institution", kind: "text", required: true },
+      { key: "image", label: "MoU image", kind: "image", helper: "A photo of the signing, or a scan of the document. Shown as the card; the caption reveals over it on hover." },
+      { key: "caption", label: "Hover caption", kind: "textarea", required: true, helper: "What the agreement lets both sides do. One or two sentences — it appears over the image, so long text will be cut off." },
+      { key: "signedOn", label: "Signed", kind: "text", placeholder: "Signed 2026" },
+    ],
+    /* Empty on purpose. An MoU is a claim that a named institution signed
+       something with KodeDristi; placeholders here would publish agreements
+       that do not exist. The section hides until real ones are added. */
+    fallback: () => [],
+  },
+  {
+    type: "lagani-highlight",
+    label: "Lagani highlights",
+    singular: "Highlight",
+    titleField: "label",
+    iconField: "icon",
+    fields: [
+      { key: "icon", label: "Icon", kind: "icon" },
+      { key: "label", label: "Label", kind: "text", required: true },
+    ],
+    fallback: () => laganiHighlights.map((h) => ({ slug: slugify(h.label), data: { ...h } })),
+  },
+  {
+    type: "lagani-focus",
+    label: "Lagani investment focus",
+    singular: "Focus area",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+    ],
+    fallback: () => laganiFocus.map((f) => ({ slug: slugify(f.title), data: { ...f } })),
+  },
+  {
+    type: "lagani-process",
+    label: "Lagani funding process",
+    singular: "Step",
+    titleField: "label",
+    fields: [
+      { key: "label", label: "Label", kind: "text", required: true },
+      { key: "detail", label: "Detail", kind: "text" },
+    ],
+    fallback: () => laganiProcess.map((t) => ({ slug: slugify(t.label), data: { ...t } })),
+  },
+  {
+    type: "lagani-portfolio",
+    label: "Lagani portfolio",
+    singular: "Portfolio company",
+    titleField: "name",
+    subtitleField: "stage",
+    fields: [
+      { key: "name", label: "Company", kind: "text", required: true },
+      { key: "logo", label: "Logo", kind: "image", helper: "Ideally a wordmark on a transparent background. Without one the tile sets the name as a wordmark instead." },
+      { key: "stage", label: "Stage", kind: "text", placeholder: "Seed · 2026", helper: "Printed under the mark — e.g. Pre-seed, Seed, Acquired. Leave empty to show none." },
+      { key: "url", label: "Website", kind: "url", placeholder: "https://…" },
+    ],
+    /* Empty on purpose. Every other type seeds from real data, but a
+       portfolio is a claim that KodeDristi funded a specific company —
+       inventing placeholders here would publish investments that never
+       happened. The section hides itself until real entries exist. */
+    fallback: () => [],
+  },
+  {
+    type: "hackathon-partner",
+    /* The type slug stays `hackathon-partner` because rows exist under it;
+       only the admin label follows the section's new, broader framing. */
+    label: "Trusted by (partner logos)",
+    singular: "Partner",
+    titleField: "name",
+    subtitleField: "tier",
+    fields: [
+      { key: "name", label: "Name", kind: "text", required: true },
+      { key: "logo", label: "Logo", kind: "image", helper: "Ideally a wordmark on a transparent background. Leave it empty and the tile sets the name as a wordmark instead — a partner listed without a logo still looks finished." },
+      { key: "tier", label: "Tier", kind: "text", placeholder: "Title Partner", helper: "Printed under the mark — e.g. Title Partner, Gold, Academic Host. Leave empty to show none." },
+      { key: "url", label: "Website", kind: "url", placeholder: "https://…", helper: "Optional. With a link the whole tile becomes clickable." },
+    ],
+    /* Seeded from the institutional partner list so the section is populated
+       the moment it ships. It stays a separate list from `partner` on
+       purpose: who sponsors the hackathon and who partners with the company
+       are two rosters, and this one is curated down from day one. */
+    fallback: () => partners.map((p) => ({ slug: slugify(p.name), data: { name: p.name } })),
+  },
+  {
+    type: "nav",
+    label: "Navigation",
+    singular: "Navigation",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "groups",
+    fields: [
+      {
+        key: "groups",
+        label: "Nav groups (JSON)",
+        kind: "json",
+        helper: "Array of { label, href, items: [{ label, href, description }] }",
+      },
+    ],
+    fallback: () => [{ slug: "main", data: { groups: navGroups } }],
+  },
+  {
+    type: "page-hero",
+    label: "Page heroes",
+    singular: "Page hero",
+    titleField: "title",
+    subtitleField: "slug",
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "eyebrowTone", label: "Eyebrow tone", kind: "tone" },
+    ],
+    fallback: () => pageHeroes.map((p) => ({ slug: p.slug, data: { ...p.data } })),
+  },
+  {
+    type: "section-heading",
+    label: "Home section headings",
+    singular: "Section heading",
+    titleField: "title",
+    subtitleField: "slug",
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "eyebrowTone", label: "Eyebrow tone", kind: "tone" },
+    ],
+    fallback: () => sectionHeadings.map((s) => ({ slug: s.slug, data: { ...s.data } })),
+  },
+  {
+    type: "home-hero",
+    label: "Home hero",
+    singular: "Home hero",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "title",
+    fields: [
+      { key: "eyebrow", label: "Eyebrow", kind: "text" },
+      { key: "title", label: "Title", kind: "textarea", required: true },
+      { key: "paragraph", label: "Paragraph", kind: "textarea" },
+      { key: "primaryLabel", label: "Primary button label", kind: "text" },
+      { key: "primaryHref", label: "Primary button link", kind: "url" },
+      { key: "secondaryLabel", label: "Secondary button label", kind: "text" },
+      { key: "secondaryHref", label: "Secondary button link", kind: "url" },
+      { key: "tertiaryLabel", label: "Tertiary link label", kind: "text" },
+      { key: "tertiaryHref", label: "Tertiary link href", kind: "url" },
+    ],
+    fallback: () => [homeHero],
+  },
+  {
+    type: "home-hero-slide",
+    label: "Hero slides",
+    singular: "Hero slide",
+    titleField: "title",
+    subtitleField: "label",
+    fields: [
+      { key: "label", label: "Rail label", kind: "text", required: true, helper: "Short name shown on the numbered rail at the foot of the hero." },
+      { key: "title", label: "Headline", kind: "textarea", required: true },
+      { key: "paragraph", label: "Paragraph", kind: "textarea" },
+      { key: "ctaLabel", label: "Button label", kind: "text" },
+      { key: "ctaHref", label: "Button link", kind: "url" },
+    ],
+    fallback: () => homeHeroSlides.map((s) => ({ slug: slugify(s.label), data: { ...s } })),
+  },
+  {
+    type: "home-trust",
+    label: "Trust strip",
+    singular: "Trust strip",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "label",
+    fields: [{ key: "label", label: "Trust text", kind: "text", required: true }],
+    fallback: () => [homeTrust],
+  },
+  {
+    type: "home-flagship",
+    label: "Flagship banner",
+    singular: "Flagship banner",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "title",
+    fields: [
+      { key: "badge", label: "Badge", kind: "text" },
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "point1", label: "Highlight point 1", kind: "text" },
+      { key: "point2", label: "Highlight point 2", kind: "text" },
+      { key: "ctaLabel", label: "Button label", kind: "text" },
+      { key: "ctaHref", label: "Button link", kind: "url" },
+    ],
+    fallback: () => [homeFlagship],
+  },
+  {
+    type: "home-lagani",
+    label: "Dristi Lagani banner",
+    singular: "Lagani banner",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "title",
+    fields: [
+      { key: "badge", label: "Badge", kind: "text" },
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "point1", label: "Point 1", kind: "text" },
+      { key: "point2", label: "Point 2", kind: "text" },
+      { key: "ctaLabel", label: "Button label", kind: "text" },
+      { key: "ctaHref", label: "Button link", kind: "url" },
+    ],
+    fallback: () => [homeLagani],
+  },
+  {
+    type: "home-final-cta",
+    label: "Final CTA banner",
+    singular: "Final CTA",
+    isSingleton: true,
+    singletonSlug: "main",
+    titleField: "title",
+    fields: [
+      { key: "title", label: "Title", kind: "text", required: true },
+      { key: "description", label: "Description", kind: "textarea" },
+      { key: "primaryLabel", label: "Primary button label", kind: "text" },
+      { key: "primaryHref", label: "Primary button link", kind: "url" },
+      { key: "secondaryLabel", label: "Secondary button label", kind: "text" },
+      { key: "secondaryHref", label: "Secondary button link", kind: "url" },
+    ],
+    fallback: () => [homeFinalCta],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Admin ordering — mirrors the order content appears on the site: global
+// chrome, then the homepage section by section, then the other pages in nav
+// order, then the hackathon pages.
+// ---------------------------------------------------------------------------
+
+export const CONTENT_GROUPS: { group: string; types: string[] }[] = [
+  { group: "Site-wide", types: ["site-settings", "nav", "page-hero", "page-seo"] },
+  {
+    group: "Homepage",
+    types: [
+      "home-section",
+      "home-hero",
+      "home-hero-slide",
+      "home-trust",
+      "stat",
+      "home-flagship",
+      "hackathon-partner",
+      "home-lagani",
+      "section-heading",
+      "solution",
+      "course",
+      "tech",
+      "delivery-step",
+      "team-member",
+      "home-final-cta",
+      "testimonial",
+    ],
+  },
+  { group: "Learn", types: ["process-step", "faq"] },
+  { group: "About", types: ["value", "capability"] },
+  { group: "Careers", types: ["perk", "role"] },
+  { group: "Insights", types: ["article"] },
+  { group: "Contact", types: ["contact-detail"] },
+  { group: "Partners", types: ["partner", "partner-benefit"] },
+  { group: "Products", types: ["product"] },
+  { group: "Projects", types: ["project"] },
+  { group: "Academia", types: ["mou-partnership"] },
+  {
+    group: "Dristi Lagani",
+    types: [
+      "lagani-highlight",
+      "lagani-focus",
+      "lagani-process",
+      "lagani-portfolio",
+      "lagani-slideshow-settings",
+      "lagani-slideshow-image",
+    ],
+  },
+  {
+    group: "Hackathon",
+    types: ["hackathon-highlight", "hackathon-track", "hackathon-timeline", "hackathon-slideshow-settings", "hackathon-slideshow-image"],
+  },
+  /* Its own group rather than a member of "Hackathon": galleries are not
+     hackathon-specific, and burying "Gallery photos" under one programme is
+     what would make the second gallery's photos hard to find. */
+  { group: "Gallery", types: ["gallery", "gallery-photo"] },
+];
+
+// Hackathon slideshow settings (admin-manageable)
+CONTENT_SCHEMAS.push({
+  type: "hackathon-slideshow-settings",
+  label: "Hackathon background",
+  singular: "Background settings",
+  isSingleton: true,
+  singletonSlug: "main",
+  titleField: "intervalSeconds",
+  fields: [
+    { key: "intervalSeconds", label: "Slide interval (seconds)", kind: "text", required: true, placeholder: "6", helper: "Seconds each background image stays before it fades to the next" },
+    { key: "autoPlay", label: "Rotate automatically", kind: "check", helper: "Off shows only the first image. Rotation is also skipped for visitors who ask for reduced motion." },
+  ],
+  fallback: () => [{ slug: "main", data: { intervalSeconds: 5, autoPlay: true } }],
+});
+
+// Hackathon slideshow images (admin-manageable)
+CONTENT_SCHEMAS.push({
+  type: "hackathon-slideshow-image",
+  label: "Hackathon background images",
+  singular: "Background image",
+  titleField: "imageUrl",
+  subtitleField: "displayOrder",
+  fields: [
+    { key: "imageUrl", label: "Desktop image", kind: "image", required: true, helper: "Background image for the National AI Hackathon section. Add several and they fade between each other." },
+    { key: "mobileImageUrl", label: "Mobile image (optional)", kind: "image" },
+    { key: "displayOrder", label: "Display order", kind: "text", required: true, placeholder: "1", helper: "Order in which images appear (1, 2, 3...)" },
+    { key: "textTone", label: "Text colour on this image", kind: "select", options: ["light", "dark"], helper: "Look at the image and pick: 'light' for white text (dark photos), 'dark' for black text (bright photos)." },
+    { key: "overlayOpacity", label: "Darken/lighten for legibility", kind: "select", options: ["0", "10", "20", "30", "40"], helper: "Leave at 0 to show the photo untouched. Raise it only if the text is hard to read — the wash follows the text colour you picked." },
+  ],
+  fallback: () => [],
+});
+
+// Dristi Lagani banner background (admin-manageable)
+CONTENT_SCHEMAS.push({
+  type: "lagani-slideshow-settings",
+  label: "Lagani background",
+  singular: "Background settings",
+  isSingleton: true,
+  singletonSlug: "main",
+  titleField: "intervalSeconds",
+  fields: [
+    { key: "intervalSeconds", label: "Slide interval (seconds)", kind: "text", required: true, placeholder: "6", helper: "Seconds each background image stays before it fades to the next" },
+    { key: "autoPlay", label: "Rotate automatically", kind: "check", helper: "Off shows only the first image. Rotation is also skipped for visitors who ask for reduced motion." },
+  ],
+  fallback: () => [{ slug: "main", data: { intervalSeconds: 5, autoPlay: true } }],
+});
+
+CONTENT_SCHEMAS.push({
+  type: "lagani-slideshow-image",
+  label: "Lagani background images",
+  singular: "Background image",
+  titleField: "imageUrl",
+  subtitleField: "displayOrder",
+  fields: [
+    { key: "imageUrl", label: "Desktop image", kind: "image", required: true, helper: "Background image for the Dristi Lagani banner. Add several and they fade between each other." },
+    { key: "mobileImageUrl", label: "Mobile image (optional)", kind: "image" },
+    { key: "displayOrder", label: "Display order", kind: "text", required: true, placeholder: "1", helper: "Order in which images appear (1, 2, 3...)" },
+    { key: "textTone", label: "Text colour on this image", kind: "select", options: ["light", "dark"], helper: "Look at the image and pick: 'light' for white text (dark photos), 'dark' for black text (bright photos)." },
+    { key: "overlayOpacity", label: "Darken/lighten for legibility", kind: "select", options: ["0", "10", "20", "30", "40"], helper: "Leave at 0 to show the photo untouched. Raise it only if the text is hard to read." },
+  ],
+  fallback: () => [],
+});
+
+// Homepage section ordering and visibility (admin-manageable)
+CONTENT_SCHEMAS.push({
+  type: "home-section",
+  label: "Homepage sections",
+  singular: "Section",
+  titleField: "label",
+  isSingleton: false,
+  fields: [
+    { key: "type", label: "Section type", kind: "select", required: true, options: [
+      "hero", "trust", "flagship", "gallery", "hackathon-partners", "academia", "lagani", "projects", "solutions", "courses", "tech", "team", "cta", "testimonials"
+    ]},
+    { key: "label", label: "Display name", kind: "text", required: true },
+    { key: "enabled", label: "Visible on page", kind: "check" },
+  ],
+  fallback: () => [
+    { slug: "hero", data: { type: "hero", label: "Hero", enabled: true } },
+    { slug: "trust", data: { type: "trust", label: "Trust strip", enabled: true } },
+    { slug: "flagship", data: { type: "flagship", label: "Flagship program", enabled: true } },
+    { slug: "gallery", data: { type: "gallery", label: "Galleries", enabled: true } },
+    { slug: "hackathon-partners", data: { type: "hackathon-partners", label: "Hackathon partners", enabled: true } },
+    { slug: "academia", data: { type: "academia", label: "Industry academia partnership", enabled: true } },
+    { slug: "lagani", data: { type: "lagani", label: "Dristi Lagani", enabled: true } },
+    { slug: "projects", data: { type: "projects", label: "Remarkable projects", enabled: true } },
+    { slug: "solutions", data: { type: "solutions", label: "Solutions overview", enabled: true } },
+    { slug: "courses", data: { type: "courses", label: "Courses overview", enabled: true } },
+    { slug: "tech", data: { type: "tech", label: "Tech delivery", enabled: true } },
+    { slug: "team", data: { type: "team", label: "Team overview", enabled: true } },
+    { slug: "cta", data: { type: "cta", label: "Final CTA", enabled: true } },
+    { slug: "testimonials", data: { type: "testimonials", label: "Testimonials", enabled: true } },
+  ],
+});
+
+/**
+ * Every page that gets its own SEO row, in site order.
+ *
+ * Detail routes (`/projects/[slug]`, `/insights/[slug]`) are deliberately
+ * absent: those already carry their own per-item SEO fields on the item
+ * itself, and a second row per project would be two places to edit one
+ * page's title.
+ */
+export const SEO_PAGES: { slug: string; pageName: string; path: string }[] = [
+  { slug: "home", pageName: "Homepage", path: "/" },
+  { slug: "about", pageName: "About", path: "/about" },
+  { slug: "team", pageName: "Team", path: "/team" },
+  { slug: "careers", pageName: "Careers", path: "/careers" },
+  { slug: "solutions", pageName: "Solutions", path: "/solutions" },
+  { slug: "products", pageName: "Products", path: "/products" },
+  { slug: "projects", pageName: "Projects", path: "/projects" },
+  { slug: "learn", pageName: "Learn", path: "/learn" },
+  { slug: "insights", pageName: "Insights", path: "/insights" },
+  { slug: "partners", pageName: "Partners", path: "/partners" },
+  { slug: "hackathon", pageName: "Hackathon", path: "/hackathon" },
+  { slug: "dristi-lagani", pageName: "Dristi Lagani", path: "/dristi-lagani" },
+  { slug: "contact", pageName: "Contact", path: "/contact" },
+];
+
+// Site-wide settings (admin-manageable). One row, read by the footer, the
+// contact page aside and the Organization structured data.
+CONTENT_SCHEMAS.push({
+  type: "site-settings",
+  label: "Site settings",
+  singular: "Site settings",
+  isSingleton: true,
+  singletonSlug: "main",
+  titleField: "companyName",
+  fields: [
+    { key: "companyName", label: "Company name", kind: "text", required: true },
+    { key: "tagline", label: "Footer tagline", kind: "textarea", helper: "The short paragraph under the logo in the footer." },
+    { key: "phone", label: "Phone (as printed)", kind: "text", required: true, placeholder: "9851362001" },
+    { key: "phoneHref", label: "Phone (dial link)", kind: "text", required: true, placeholder: "tel:+9779851362001", helper: "What a phone actually dials. Include the country code." },
+    { key: "email", label: "Email", kind: "text", required: true },
+    { key: "address", label: "Address", kind: "text", required: true },
+    { key: "officeHours", label: "Office hours", kind: "text", required: true, placeholder: "10:00 AM – 6:00 PM" },
+    { key: "officeDays", label: "Office days", kind: "text", placeholder: "Sunday – Friday", helper: "Optional. Printed after the hours where there is room for it." },
+    { key: "footerNote", label: "Footer strapline", kind: "text", helper: "The bold line at the end of the footer paragraph." },
+  ],
+  fallback: () => [
+    {
+      slug: "main",
+      data: {
+        companyName: "KodeDristi Software Pvt. Ltd.",
+        tagline: "One platform for software delivery, applied AI and technical learning.",
+        phone: "9851362001",
+        phoneHref: "tel:+9779851362001",
+        email: "hello@kodedristi.com",
+        address: "Kathmandu, Nepal",
+        officeHours: "10:00 AM – 6:00 PM",
+        officeDays: "",
+        footerNote: "#WithYouEveryStep",
+      },
+    },
+  ],
+});
+
+// Per-page SEO. Seeded for every routable page so the admin never has to
+// know which slug a page expects — the rows are already there to edit.
+CONTENT_SCHEMAS.push({
+  type: "page-seo",
+  label: "Page SEO",
+  singular: "Page",
+  titleField: "pageName",
+  subtitleField: "path",
+  fields: [
+    { key: "pageName", label: "Page", kind: "text", required: true, helper: "Admin label only — never shown on the site." },
+    { key: "path", label: "Path", kind: "text", required: true, placeholder: "/about" },
+    { key: "seoTitle", label: "SEO title", kind: "text", helper: "Leave empty to keep the page's built-in title. Aim for under 60 characters." },
+    { key: "metaDescription", label: "Meta description", kind: "textarea", helper: "The snippet under the title in search results. Aim for 150–160 characters." },
+    { key: "canonicalUrl", label: "Canonical URL", kind: "url", helper: "Only needed when this page duplicates another. Empty means the page is its own canonical." },
+    { key: "ogTitle", label: "Social title", kind: "text", helper: "Falls back to the SEO title." },
+    { key: "ogDescription", label: "Social description", kind: "textarea", helper: "Falls back to the meta description." },
+    { key: "ogImage", label: "Social share image", kind: "image", helper: "Shown when the page is shared. 1200x630 works everywhere." },
+    { key: "ogImageAlt", label: "Share image alt text", kind: "text" },
+    { key: "noIndex", label: "Hide from search engines", kind: "check", helper: "Adds noindex. The page stays reachable by anyone with the link." },
+  ],
+  fallback: () => SEO_PAGES.map((p) => ({ slug: p.slug, data: { pageName: p.pageName, path: p.path } })),
+});
+
+const schemaMap = new Map(CONTENT_SCHEMAS.map((s) => [s.type, s]));
+
+export function getSchema(type: string): ContentSchema {
+  const schema = schemaMap.get(type);
+  if (!schema) throw new Error(`Unknown content type: ${type}`);
+  return schema;
+}
+
+export type AdminNavItem = {
+  type: string;
+  label: string;
+  singular: string;
+  isSingleton: boolean;
+};
+export type AdminNavGroup = { group: string; items: AdminNavItem[] };
+
+/**
+ * The content tree the admin sidebar is built from, grouped the way the site
+ * is: chrome first, then the homepage section by section, then the rest.
+ *
+ * Deliberately free of database access. `getTypeSummary` covers the same
+ * ground but needs a query for its counts, and this renders on *every* admin
+ * page — paying for a round trip to draw navigation, and losing the whole
+ * sidebar whenever Postgres is cold, is a bad trade. Counts belong on the
+ * content overview, where they are the point rather than decoration.
+ */
+export function getAdminContentNav(): AdminNavGroup[] {
+  const toItem = (schema: ContentSchema): AdminNavItem => ({
+    type: schema.type,
+    label: schema.label,
+    singular: schema.singular,
+    isSingleton: Boolean(schema.isSingleton),
+  });
+
+  const groups: AdminNavGroup[] = [];
+  const placed = new Set<string>();
+
+  for (const g of CONTENT_GROUPS) {
+    const items: AdminNavItem[] = [];
+    for (const type of g.types) {
+      const schema = schemaMap.get(type);
+      if (!schema) continue;
+      placed.add(type);
+      items.push(toItem(schema));
+    }
+    if (items.length > 0) groups.push({ group: g.group, items });
+  }
+
+  // A type registered after CONTENT_GROUPS was last edited still needs a home;
+  // without this it would exist, be editable by URL, and be unreachable.
+  const orphans = CONTENT_SCHEMAS.filter((s) => !placed.has(s.type)).map(toItem);
+  if (orphans.length > 0) groups.push({ group: "Other", items: orphans });
+
+  return groups;
+}
+
+

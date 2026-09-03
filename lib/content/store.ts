@@ -1,0 +1,539 @@
+import { db } from "@/lib/db";
+import { ensureSchema } from "@/lib/db/schema";
+import {
+  CONTENT_GROUPS,
+  CONTENT_SCHEMAS,
+  getSchema,
+  type ContentItem,
+  type ContentSchema,
+  type SeedRow,
+} from "@/lib/content/schemas";
+import { cached, invalidateCache, TTL } from "@/lib/cache";
+
+type Row = {
+  id: number;
+  type: string;
+  slug: string | null;
+  data: unknown;
+  position: number;
+  published: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+function mapRow<T>(row: Row): ContentItem<T> {
+  return {
+    id: row.id,
+    type: row.type,
+    slug: row.slug,
+    data: (typeof row.data === "string" ? JSON.parse(row.data) : row.data) as T,
+    position: row.position,
+    published: row.published,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function fallbackItems<T>(schema: ContentSchema): ContentItem<T>[] {
+  const rows = schema.fallback?.() ?? [];
+  return rows.map((r, i) => ({
+    id: 0,
+    type: schema.type,
+    slug: r.slug,
+    data: r.data as T,
+    position: i,
+    published: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
+}
+
+function logFallback(type: string, err: unknown) {
+  console.warn(`[content] "${type}" not readable from DB, using fallback data.`, err);
+}
+
+// Serverless Postgres occasionally refuses the first connection of a session
+// (paused project waking up, cold TLS handshake). Admin writes are idempotent
+// (UPDATE by id / ON CONFLICT upsert), so retrying once after a connection
+// timeout is safe and turns a hard "connection timeout" failure into a no-op.
+function isConnectionTimeout(err: unknown): boolean {
+  const message = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return message.includes("timeout") || message.includes("etimedout") || message.includes("econnreset");
+}
+
+async function retryOnTimeout<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isConnectionTimeout(err)) {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      return fn();
+    }
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Seeding
+// ---------------------------------------------------------------------------
+
+const seeding = new Map<string, Promise<void>>();
+
+async function insertRows(schema: ContentSchema, rows: SeedRow[]): Promise<void> {
+  for (let i = 0; i < rows.length; i += 1) {
+    await db.query(
+      `INSERT INTO content_items (type, slug, data, position, published)
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (type, slug) DO NOTHING`,
+      [schema.type, rows[i].slug, JSON.stringify(rows[i].data), i]
+    );
+  }
+}
+
+/**
+ * Creates any default row this type has never had, and puts it where it
+ * belongs.
+ *
+ * Seeding used to fire only when a type held no rows at all, which was fine
+ * exactly once. Every default added afterwards — a new homepage section, say
+ * — silently never existed: the site could paper over it at render time, but
+ * the admin lists real rows, so the section was invisible and unmanageable
+ * there. Anything shipped as a default now becomes a row on first read.
+ *
+ * A slug that exists is never touched, and that includes soft-deleted ones:
+ * the row is still there, so `ON CONFLICT (type, slug) DO NOTHING` skips it
+ * and a section someone deleted stays deleted.
+ *
+ * New rows are spliced in beside the neighbour they ship next to rather than
+ * appended, then the whole type is renumbered so that placement survives.
+ * Appending would be simpler and would quietly move every new section to the
+ * bottom of the homepage.
+ */
+async function syncFallbackRows(
+  schema: ContentSchema,
+  fallback: () => SeedRow[]
+): Promise<void> {
+  const res = await db.query<{ slug: string | null }>(
+    "SELECT slug FROM content_items WHERE type = $1 ORDER BY position ASC, id ASC",
+    [schema.type]
+  );
+  const rows = fallback();
+
+  if (res.rows.length === 0) {
+    await insertRows(schema, rows);
+    return;
+  }
+
+  const stored = res.rows.map((r) => r.slug).filter((s): s is string => Boolean(s));
+  const known = new Set(stored);
+  const missing = rows.filter((r) => !known.has(r.slug));
+  if (missing.length === 0) return;
+
+  const order = [...stored];
+  const placed = new Set(order);
+  const defaults = rows.map((r) => r.slug);
+  defaults.forEach((slug, i) => {
+    if (placed.has(slug)) return;
+    // Anchor to the nearest earlier default that is already present, so a
+    // hand-reordered homepage keeps its order and the new row still lands
+    // next to the section it ships beside.
+    const previous = defaults.slice(0, i).reverse().find((d) => placed.has(d));
+    const at = previous ? order.indexOf(previous) + 1 : 0;
+    order.splice(at, 0, slug);
+    placed.add(slug);
+  });
+
+  for (const row of missing) {
+    await db.query(
+      `INSERT INTO content_items (type, slug, data, position, published)
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (type, slug) DO NOTHING`,
+      [schema.type, row.slug, JSON.stringify(row.data), order.indexOf(row.slug)]
+    );
+  }
+
+  for (let i = 0; i < order.length; i += 1) {
+    await db.query(
+      "UPDATE content_items SET position = $1 WHERE type = $2 AND slug = $3",
+      [i, schema.type, order[i]]
+    );
+  }
+
+  invalidateCache(`list:${schema.type}`);
+}
+
+function ensureSeeded(schema: ContentSchema): Promise<void> {
+  if (!schema.fallback) return Promise.resolve();
+  const fallback = schema.fallback;
+  const existing = seeding.get(schema.type);
+  if (existing) return existing;
+  const promise = (async () => {
+    await ensureSchema();
+    await syncFallbackRows(schema, fallback);
+  })().catch((err) => {
+    seeding.delete(schema.type);
+    throw err;
+  });
+  seeding.set(schema.type, promise);
+  return promise;
+}
+
+export async function seedContent(type?: string): Promise<{ type: string; inserted: number }[]> {
+  await ensureSchema();
+  const schemas = CONTENT_SCHEMAS.filter(
+    (s) => s.fallback && (!type || s.type === type)
+  );
+  const results: { type: string; inserted: number }[] = [];
+  for (const schema of schemas) {
+    const fallback = schema.fallback as () => SeedRow[];
+    const before = await db.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM content_items WHERE type = $1",
+      [schema.type]
+    );
+    const beforeCount = before.rows[0]?.count ?? 0;
+    await insertRows(schema, fallback());
+    const after = await db.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM content_items WHERE type = $1",
+      [schema.type]
+    );
+    results.push({
+      type: schema.type,
+      inserted: Math.max(0, (after.rows[0]?.count ?? 0) - beforeCount),
+    });
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Reads
+// ---------------------------------------------------------------------------
+
+export async function listContent<T = Record<string, unknown>>(
+  type: string,
+  opts: { publishedOnly?: boolean } = {}
+): Promise<ContentItem<T>[]> {
+  const schema = getSchema(type);
+  const publishedOnly = opts.publishedOnly !== false;
+  const cacheKey = `list:${type}:${publishedOnly ? "pub" : "all"}`;
+
+  return cached<ContentItem<T>[]>(cacheKey, TTL.SHORT, async () => {
+    try {
+      await ensureSeeded(schema);
+      const res = await db.query<Row>(
+        "SELECT * FROM content_items WHERE type = $1 AND deleted_at IS NULL ORDER BY position ASC, id ASC",
+        [type]
+      );
+      let items = res.rows.map((r) => mapRow<T>(r));
+      if (publishedOnly) items = items.filter((i) => i.published);
+      return items;
+    } catch (err) {
+      logFallback(type, err);
+      let items = fallbackItems<T>(schema);
+      if (publishedOnly) items = items.filter((i) => i.published);
+      return items;
+    }
+  });
+}
+
+/**
+ * Every slug ever recorded for a type, soft-deleted rows included.
+ *
+ * `listContent` hides deleted rows, which leaves a caller that fills gaps
+ * from a default list unable to tell "never existed" from "the admin removed
+ * it on purpose" — both look like empty space. Re-adding a section someone
+ * deleted is worse than never adding it, so that caller needs to see the
+ * tombstones. Returns null when the database cannot answer: unverifiable is
+ * not the same as absent, and the caller should leave the order alone.
+ */
+export async function listAllSlugs(type: string): Promise<Set<string> | null> {
+  return cached<Set<string> | null>(`list:${type}:allslugs`, TTL.SHORT, async () => {
+    try {
+      await ensureSeeded(getSchema(type));
+      const res = await db.query<{ slug: string | null }>(
+        "SELECT slug FROM content_items WHERE type = $1",
+        [type]
+      );
+      return new Set(
+        res.rows.map((r) => r.slug).filter((s): s is string => Boolean(s))
+      );
+    } catch (err) {
+      logFallback(`${type} (slugs)`, err);
+      return null;
+    }
+  });
+}
+
+export async function getContentBySlug<T = Record<string, unknown>>(
+  type: string,
+  slug: string
+): Promise<ContentItem<T> | null> {
+  const schema = getSchema(type);
+  try {
+    await ensureSeeded(schema);
+    const res = await db.query<Row>(
+      "SELECT * FROM content_items WHERE type = $1 AND slug = $2 AND published = true AND deleted_at IS NULL LIMIT 1",
+      [type, slug]
+    );
+    if (res.rows[0]) return mapRow<T>(res.rows[0]);
+    const fallbackRow = schema.fallback?.().find((r) => r.slug === slug);
+    if (fallbackRow) {
+      return {
+        id: 0,
+        type: schema.type,
+        slug: fallbackRow.slug,
+        data: fallbackRow.data as T,
+        position: 0,
+        published: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+    return null;
+  } catch (err) {
+    logFallback(type, err);
+    const fallbackRow = schema.fallback?.().find((r) => r.slug === slug);
+    if (!fallbackRow) return null;
+    return {
+      id: 0,
+      type: schema.type,
+      slug: fallbackRow.slug,
+      data: fallbackRow.data as T,
+      position: 0,
+      published: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+}
+
+export async function getSingleton<T = Record<string, unknown>>(
+  type: string
+): Promise<ContentItem<T> | null> {
+  const schema = getSchema(type);
+  try {
+    await ensureSeeded(schema);
+    const res = await db.query<Row>(
+      "SELECT * FROM content_items WHERE type = $1 AND deleted_at IS NULL ORDER BY position ASC, id ASC LIMIT 1",
+      [type]
+    );
+    if (res.rows[0]) return mapRow<T>(res.rows[0]);
+    return null;
+  } catch (err) {
+    logFallback(type, err);
+    const fallbackRow = schema.fallback?.()[0];
+    if (!fallbackRow) return null;
+    return {
+      id: 0,
+      type: schema.type,
+      slug: fallbackRow.slug,
+      data: fallbackRow.data as T,
+      position: 0,
+      published: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+}
+
+export async function getSingletonData<T = Record<string, unknown>>(
+  type: string
+): Promise<T | null> {
+  const item = await getSingleton<T>(type);
+  if (item) return item.data;
+  const schema = getSchema(type);
+  const fallback = schema.fallback?.()[0];
+  return (fallback?.data as T) ?? null;
+}
+
+// ---------------------------------------------------------------------------
+// Writes (admin only)
+// ---------------------------------------------------------------------------
+
+export async function listContentRaw<T = Record<string, unknown>>(
+  type: string
+): Promise<ContentItem<T>[]> {
+  const schema = getSchema(type);
+  try {
+    await ensureSeeded(schema);
+    const res = await db.query<Row>(
+      "SELECT * FROM content_items WHERE type = $1 AND deleted_at IS NULL ORDER BY position ASC, id ASC",
+      [type]
+    );
+    return res.rows.map((r) => mapRow<T>(r));
+  } catch (err) {
+    logFallback(type, err);
+    return fallbackItems<T>(schema);
+  }
+}
+
+export async function saveContent(input: {
+  id?: number;
+  type: string;
+  slug: string;
+  data: Record<string, unknown>;
+  published?: boolean;
+  position?: number;
+}): Promise<ContentItem> {
+  await ensureSchema();
+  const slug = input.slug.trim();
+  if (!slug) throw new Error("Slug is required");
+  const published = input.published ?? true;
+
+  return retryOnTimeout(async () => {
+    if (input.id) {
+      const res = await db.query<Row>(
+        `UPDATE content_items
+         SET slug = $1, data = $2, published = $3, updated_at = now()
+         WHERE id = $4
+         RETURNING *`,
+        [slug, JSON.stringify(input.data), published, input.id]
+      );
+      if (!res.rows[0]) throw new Error("Content item not found");
+      invalidateCache("list:");
+      return mapRow(res.rows[0]);
+    }
+
+    const positionRes = await db.query<{ pos: number }>(
+      "SELECT COALESCE(MAX(position), -1) + 1 AS pos FROM content_items WHERE type = $1",
+      [input.type]
+    );
+    const position = input.position ?? positionRes.rows[0].pos;
+    const res = await db.query<Row>(
+      `INSERT INTO content_items (type, slug, data, position, published)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (type, slug) DO UPDATE SET
+         data = EXCLUDED.data,
+         published = EXCLUDED.published,
+         position = EXCLUDED.position,
+         updated_at = now()
+       RETURNING *`,
+      [input.type, slug, JSON.stringify(input.data), position, published]
+    );
+    invalidateCache(`list:${input.type}`);
+    return mapRow(res.rows[0]);
+  });
+}
+
+export async function deleteContentItem(id: number): Promise<void> {
+  await ensureSchema();
+  await retryOnTimeout(() =>
+    db
+      .query(
+        "UPDATE content_items SET deleted_at = now(), updated_at = now() WHERE id = $1 AND deleted_at IS NULL",
+        [id]
+      )
+      .then(() => undefined)
+  );
+  invalidateCache("list:");
+}
+
+export async function setContentPublished(id: number, published: boolean): Promise<void> {
+  await ensureSchema();
+  await retryOnTimeout(() =>
+    db
+      .query("UPDATE content_items SET published = $1, updated_at = now() WHERE id = $2", [
+        published,
+        id,
+      ])
+      .then(() => undefined)
+  );
+  invalidateCache("list:");
+}
+
+export async function reorderContent(type: string, orderedIds: number[]): Promise<void> {
+  await ensureSchema();
+  await retryOnTimeout(async () => {
+    for (let i = 0; i < orderedIds.length; i += 1) {
+      await db.query(
+        "UPDATE content_items SET position = $1, updated_at = now() WHERE id = $2 AND type = $3",
+        [i, orderedIds[i], type]
+      );
+    }
+  });
+  invalidateCache(`list:${type}`);
+}
+
+/**
+ * How many live rows each content type holds, in one query.
+ *
+ * The homepage and page screens draw a badge beside every part they list —
+ * a dozen types on one screen — and a count each would be a dozen round
+ * trips to decorate a page. Returns an empty map when the database is
+ * unreachable: a missing badge is a far better failure than a missing
+ * screen.
+ */
+export async function getTypeCounts(): Promise<Map<string, number>> {
+  try {
+    await ensureSchema();
+    const res = await db.query<{ type: string; count: number }>(
+      "SELECT type, count(*)::int AS count FROM content_items WHERE deleted_at IS NULL GROUP BY type"
+    );
+    return new Map(res.rows.map((r) => [r.type, r.count]));
+  } catch (err) {
+    logFallback("counts", err);
+    return new Map();
+  }
+}
+
+export async function getTypeSummary(): Promise<
+  {
+    type: string;
+    label: string;
+    singular: string;
+    isSingleton: boolean;
+    group: string;
+    count: number;
+    publishedCount: number;
+  }[]
+> {
+  const ordered: { type: string; group: string }[] = [];
+  for (const g of CONTENT_GROUPS) {
+    for (const t of g.types) ordered.push({ type: t, group: g.group });
+  }
+  const known = new Set(ordered.map((o) => o.type));
+  for (const s of CONTENT_SCHEMAS) {
+    if (!known.has(s.type)) ordered.push({ type: s.type, group: "Other" });
+  }
+
+  try {
+    await ensureSchema();
+    await Promise.all(CONTENT_SCHEMAS.filter((s) => s.fallback).map(ensureSeeded));
+    const res = await db.query<{ type: string; count: number; publishedCount: number }>(
+      /* Soft-deleted rows are excluded to match every read path. Without the
+         filter a type an admin had emptied still reported its old total, and
+         the admin screens count rows they will never be shown. */
+      `SELECT type, count(*)::int AS count,
+              count(*) FILTER (WHERE published)::int AS publishedCount
+       FROM content_items WHERE deleted_at IS NULL GROUP BY type`
+    );
+    const byType = new Map(res.rows.map((r) => [r.type, r]));
+    return ordered.map(({ type, group }) => {
+      const schema = getSchema(type);
+      const row = byType.get(type);
+      return {
+        type,
+        label: schema.label,
+        singular: schema.singular,
+        isSingleton: schema.isSingleton ?? false,
+        group,
+        count: row?.count ?? 0,
+        publishedCount: row?.publishedCount ?? 0,
+      };
+    });
+  } catch (err) {
+    logFallback("summary", err);
+    return ordered.map(({ type, group }) => {
+      const schema = getSchema(type);
+      const count = schema.fallback?.().length ?? 0;
+      return {
+        type,
+        label: schema.label,
+        singular: schema.singular,
+        isSingleton: schema.isSingleton ?? false,
+        group,
+        count,
+        publishedCount: count,
+      };
+    });
+  }
+}

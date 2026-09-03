@@ -1,0 +1,325 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  ArrowUp01Icon,
+  ArrowDown01Icon,
+  DragDropVerticalIcon,
+  AddSquareIcon,
+  Delete01Icon,
+  Loading01Icon,
+  CheckmarkCircle02Icon,
+  Edit02Icon,
+} from "hugeicons-react";
+import { ICON_MAP } from "@/lib/content/icons";
+import type { ContentItem } from "@/lib/content/schemas";
+import { cn } from "@/lib/utils";
+
+export type ContentListRow = Omit<ContentItem, "createdAt" | "updatedAt"> & {
+  createdAt: string;
+  updatedAt: string;
+};
+
+function displayValue(item: ContentListRow, field?: string): string {
+  if (!field) return item.slug ?? "";
+  const v = item.data?.[field];
+  return typeof v === "string" ? v : "";
+}
+
+export function ContentList({
+  type,
+  label,
+  singular,
+  isSingleton,
+  titleField,
+  subtitleField,
+  iconField,
+  items,
+}: {
+  type: string;
+  label: string;
+  singular: string;
+  isSingleton: boolean;
+  titleField: string;
+  subtitleField: string;
+  iconField: string;
+  items: ContentListRow[];
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState<string | null>(null);
+  /* Drag state only — the committed order still lives in `items`, which comes
+     from the server. Holding a second copy of the list here would mean
+     reconciling it after every save, publish and delete. */
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(fn: () => Promise<Response>) {
+    setError(null);
+    try {
+      const res = await fn();
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Action failed");
+      }
+      router.refresh();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  async function togglePublish(item: ContentListRow) {
+    setBusy(`pub-${item.id}`);
+    await run(() =>
+      fetch("/api/admin/content", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: item.id, published: !item.published }),
+      })
+    );
+    setBusy(null);
+  }
+
+  async function remove(item: ContentListRow) {
+    if (!confirm(`Delete "${displayValue(item, titleField) || item.slug}"? This cannot be undone.`)) return;
+    setBusy(`del-${item.id}`);
+    await run(() => fetch(`/api/admin/content?id=${item.id}`, { method: "DELETE" }));
+    setBusy(null);
+  }
+
+  /* What the list looks like mid-drag: the real order with the dragged row
+     lifted out and dropped at the hovered position. Derived rather than
+     stored, so nothing has to be synced back when the drag ends. */
+  const display = useMemo(() => {
+    if (dragIndex === null || overIndex === null || dragIndex === overIndex) {
+      return items;
+    }
+    const next = [...items];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(overIndex, 0, moved);
+    return next;
+  }, [items, dragIndex, overIndex]);
+
+  async function commitOrder(ids: number[]) {
+    setBusy("reorder");
+    await run(() =>
+      fetch("/api/admin/content/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, ids }),
+      })
+    );
+    setBusy(null);
+  }
+
+  function onDrop() {
+    if (dragIndex !== null && overIndex !== null && dragIndex !== overIndex) {
+      void commitOrder(display.map((i) => i.id));
+    }
+    setDragIndex(null);
+    setOverIndex(null);
+  }
+
+  async function move(item: ContentListRow, dir: -1 | 1) {
+    setBusy(`mv-${item.id}`);
+    const ids = items.map((i) => i.id);
+    const idx = ids.indexOf(item.id);
+    const target = idx + dir;
+    if (target < 0 || target >= ids.length) {
+      setBusy(null);
+      return;
+    }
+    [ids[idx], ids[target]] = [ids[target], ids[idx]];
+    await run(() =>
+      fetch("/api/admin/content/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, ids }),
+      })
+    );
+    setBusy(null);
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-text-primary">{label}</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            {items.length} item{items.length === 1 ? "" : "s"} ·{" "}
+            {isSingleton ? "single content block" : "drag a row to reorder"}
+          </p>
+        </div>
+        {!isSingleton && (
+          <Link
+            href={`/admin/content/${type}/new`}
+            className="focus-ring inline-flex h-10 items-center gap-2 rounded-full bg-brand-blue px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-hover"
+          >
+            <AddSquareIcon className="h-6 w-6" /> New {singular}
+          </Link>
+        )}
+      </div>
+
+      {error && (
+        <p className="rounded-xl border-[0.5px] border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-text-primary">
+          {error}
+        </p>
+      )}
+
+      <div className="card divide-y divide-border">
+        {items.length === 0 && (
+          <p className="p-6 text-sm text-text-muted">
+            No {label.toLowerCase()} yet.
+            {!isSingleton && (
+              <>
+                {" "}
+                <Link href={`/admin/content/${type}/new`} className="font-semibold text-link hover:underline">
+                  Create one
+                </Link>
+                .
+              </>
+            )}
+          </p>
+        )}
+
+        {display.map((item, i) => {
+          const title = displayValue(item, titleField) || item.slug || `#${item.id}`;
+          const subtitle = subtitleField ? displayValue(item, subtitleField) : undefined;
+          const Icon = iconField
+            ? (ICON_MAP[displayValue(item, iconField) as keyof typeof ICON_MAP] ?? null)
+            : null;
+          return (
+            <div
+              key={item.id}
+              /* Rows are draggable only when there is an order to change.
+                 A singleton has one row and dragging it means nothing. */
+              draggable={!isSingleton && busy === null}
+              onDragStart={(e) => {
+                setDragIndex(i);
+                setOverIndex(i);
+                e.dataTransfer.effectAllowed = "move";
+                // Firefox refuses to start a drag without payload.
+                e.dataTransfer.setData("text/plain", String(item.id));
+              }}
+              onDragOver={(e) => {
+                if (dragIndex === null) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                if (overIndex !== i) setOverIndex(i);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                onDrop();
+              }}
+              onDragEnd={onDrop}
+              className={cn(
+                "flex items-center gap-4 p-4 transition-colors sm:px-5",
+                !isSingleton && "cursor-grab active:cursor-grabbing",
+                dragIndex !== null && display[i]?.id === items[dragIndex]?.id
+                  ? "bg-brand-blue-light/60 opacity-60"
+                  : dragIndex !== null && "bg-background-secondary/40"
+              )}
+            >
+              {!isSingleton && (
+                <span
+                  aria-hidden
+                  title="Drag to reorder"
+                  className="shrink-0 text-text-muted/60"
+                >
+                  <DragDropVerticalIcon className="h-6 w-6" />
+                </span>
+              )}
+              {/* The arrow buttons stay. Native drag and drop is mouse-only,
+                  so removing them would leave keyboard users with no way to
+                  reorder anything at all. */}
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => move(item, -1)}
+                  disabled={i === 0 || busy !== null}
+                  aria-label="Move up"
+                  className="focus-ring flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-background-secondary hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ArrowUp01Icon className="h-6 w-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => move(item, 1)}
+                  disabled={i === items.length - 1 || busy !== null}
+                  aria-label="Move down"
+                  className="focus-ring flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-background-secondary hover:text-text-primary disabled:opacity-30 disabled:hover:bg-transparent"
+                >
+                  <ArrowDown01Icon className="h-6 w-6" />
+                </button>
+              </div>
+
+              <Link
+                href={`/admin/content/${type}/${item.id}`}
+                className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-xl"
+              >
+                {Icon && (
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-blue-light text-link">
+                    <Icon className="h-7.5 w-7.5" />
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-text-primary">{title}</span>
+                  {subtitle && <span className="mt-0.5 block truncate text-xs text-text-muted">{subtitle}</span>}
+                  <span className="mt-0.5 block text-[11px] text-text-muted">/{item.slug}</span>
+                </span>
+              </Link>
+
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => togglePublish(item)}
+                  disabled={busy !== null}
+                  title={item.published ? "Published — click to unpublish" : "Unpublished — click to publish"}
+                  className={cn(
+                    "focus-ring inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-60",
+                    item.published
+                      ? "border-brand-green/30 bg-brand-green/10 text-brand-green-hover hover:bg-brand-green/20"
+                      : "border-border bg-background text-text-muted hover:border-brand-blue/40 hover:text-text-secondary"
+                  )}
+                >
+                  {busy === `pub-${item.id}` ? (
+                    <Loading01Icon className="h-5.25 w-5.25 animate-spin" />
+                  ) : item.published ? (
+                    <CheckmarkCircle02Icon className="h-5.25 w-5.25" />
+                  ) : (
+                    <span className="h-2 w-2 rounded-full bg-text-muted" />
+                  )}
+                  {item.published ? "Live" : "Draft"}
+                </button>
+
+                <Link
+                  href={`/admin/content/${type}/${item.id}`}
+                  aria-label={`Edit ${title}`}
+                  className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-text-secondary transition-colors hover:border-brand-blue hover:text-link"
+                >
+                  <Edit02Icon className="h-6 w-6" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => remove(item)}
+                  disabled={busy !== null}
+                  aria-label={`Delete ${title}`}
+                  className="focus-ring flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-text-muted transition-colors hover:border-red-500/40 hover:text-red-500 disabled:opacity-60"
+                >
+                  {busy === `del-${item.id}` ? (
+                    <Loading01Icon className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <Delete01Icon className="h-6 w-6" />
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
