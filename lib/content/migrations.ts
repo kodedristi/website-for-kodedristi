@@ -77,6 +77,28 @@ const MIGRATIONS: Migration[] = [
       await replaceField("section-heading", "hackathon-partners", "eyebrow", "Our Partners", "Partners");
     },
   },
+  {
+    id: "2026-09-contact-email",
+    describe: "Point the contact email at info@kodedristi.com.",
+    run: async () => {
+      await replaceField("contact-detail", "email", "value", "hello@kodedristi.com", "info@kodedristi.com");
+      await replaceField(
+        "contact-detail",
+        "email",
+        "href",
+        "mailto:hello@kodedristi.com",
+        "mailto:info@kodedristi.com"
+      );
+      await replaceField("site-settings", "main", "email", "hello@kodedristi.com", "info@kodedristi.com");
+    },
+  },
+  {
+    id: "2026-09-final-cta-proposal-link",
+    describe: "Point the homepage final CTA primary button at the proposal form.",
+    run: async () => {
+      await replaceField("home-final-cta", "main", "primaryHref", "/contact", "/contact?section=proposal");
+    },
+  },
 ];
 
 /**

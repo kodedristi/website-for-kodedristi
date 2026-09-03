@@ -301,7 +301,7 @@ function TestimonialCard({
 
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-black/60"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-linear-to-t from-black/75 via-black/40 to-transparent"
             />
 
             <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4 text-white">
@@ -379,7 +379,7 @@ function TestimonialCard({
 
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-black/60"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-linear-to-t from-black/75 via-black/40 to-transparent"
             />
 
             <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-4 text-white">

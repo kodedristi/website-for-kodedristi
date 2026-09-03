@@ -16,6 +16,7 @@ const SECTIONS: { key: string; label: string }[] = [
   { key: "project", label: "Project Enquiries" },
   { key: "course", label: "Course Applications" },
   { key: "partnership", label: "Partnerships" },
+  { key: "proposal", label: "Proposals" },
   { key: "product_talk", label: "Product Talks" },
 ];
 
@@ -91,16 +92,31 @@ export function SubmissionsPanel({
                 <div className="border-t border-border bg-background-secondary/40 px-5 py-4">
                   <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                     {rows.length === 0 && <p className="text-sm text-text-muted">No fields submitted.</p>}
-                    {rows.map(([k, v]) => (
-                      <div key={k}>
-                        <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-                          {k}
-                        </dt>
-                        <dd className="mt-0.5 break-words text-sm text-text-primary">
-                          {String(v)}
-                        </dd>
-                      </div>
-                    ))}
+                    {rows.map(([k, v]) => {
+                      const str = String(v);
+                      const isUrl = /^https?:\/\//.test(str) || str.startsWith("/uploads/");
+                      return (
+                        <div key={k}>
+                          <dt className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+                            {k}
+                          </dt>
+                          <dd className="mt-0.5 break-words text-sm text-text-primary">
+                            {isUrl ? (
+                              <a
+                                href={str}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="font-medium text-link underline underline-offset-2"
+                              >
+                                {k === "documentUrl" ? "Download document" : str}
+                              </a>
+                            ) : (
+                              str
+                            )}
+                          </dd>
+                        </div>
+                      );
+                    })}
                   </dl>
                 </div>
               )}

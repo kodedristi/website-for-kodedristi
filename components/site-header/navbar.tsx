@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { Menu01Icon, Call02Icon, Time02Icon, Cancel01Icon, ArrowRight01Icon } from "hugeicons-react";
 import type { NavGroup } from "@/lib/data/nav";
 import { NavGroups } from "@/components/site-header/nav-dropdown";
-import { ThemeToggle } from "@/components/site-header/theme-toggle";
 import { MobileMenu } from "@/components/site-header/mobile-menu";
 import { SignInButton } from "@/components/auth/sign-in-button";
 
@@ -126,7 +125,6 @@ export function Navbar({ navGroups }: { navGroups: NavGroup[] }) {
                 <span className="hidden items-center gap-1.5 md:flex">
                   <Time02Icon className="h-5.25 w-5.25" /> 9:00 AM – 7:00 PM
                 </span>
-                <ThemeToggle className="border-nav-border text-nav-text-muted hover:border-nav-text hover:text-nav-text" />
               </div>
             </div>
           </motion.div>

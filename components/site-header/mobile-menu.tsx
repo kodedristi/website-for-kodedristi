@@ -7,7 +7,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDown01Icon, Cancel01Icon } from "hugeicons-react";
 import type { NavGroup } from "@/lib/data/nav";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/site-header/theme-toggle";
 import { LangToggle } from "@/components/site-header/lang-toggle";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { cn } from "@/lib/utils";
@@ -105,9 +104,8 @@ export function MobileMenu({
             </div>
 
             <div className="flex flex-col gap-4 border-t-[0.5px] border-border px-5 py-5">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center">
                 <LangToggle />
-                <ThemeToggle />
               </div>
               <div className="flex items-center justify-between gap-3">
                 <SignInButton compact />

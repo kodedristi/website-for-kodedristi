@@ -565,7 +565,7 @@ const faqs: { q: string; a: string; group: "learn" | "products" }[] = [
 
 const contactDetails = [
   { icon: "phone", label: "Phone", value: "9851362001", href: "tel:+9779851362001" },
-  { icon: "mail", label: "Email", value: "hello@kodedristi.com", href: "mailto:hello@kodedristi.com" },
+  { icon: "mail", label: "Email", value: "info@kodedristi.com", href: "mailto:info@kodedristi.com" },
   { icon: "map-pin", label: "Location", value: "Kathmandu, Nepal" },
   { icon: "clock", label: "Office Hours", value: "10:00 AM – 6:00 PM" },
 ];
@@ -727,7 +727,7 @@ const homeFinalCta: SeedRow = {
     title: "Let's architect your digital future.",
     description:
       "Tell us what you're trying to solve. We'll respond within one business day with next steps — no obligation.",
-    primaryLabel: "Send Proposal",
+    primaryLabel: "Request for proposal",
     primaryHref: "/contact?section=proposal",
     secondaryLabel: "Explore Programs",
     secondaryHref: "/learn",
@@ -1576,7 +1576,7 @@ CONTENT_SCHEMAS.push({
         tagline: "One platform for software delivery, applied AI and technical learning.",
         phone: "9851362001",
         phoneHref: "tel:+9779851362001",
-        email: "hello@kodedristi.com",
+        email: "info@kodedristi.com",
         address: "Kathmandu, Nepal",
         officeHours: "10:00 AM – 6:00 PM",
         officeDays: "",

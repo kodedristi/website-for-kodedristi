@@ -367,7 +367,7 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettingsData = {
   tagline: "One platform for software delivery, applied AI and technical learning.",
   phone: "9851362001",
   phoneHref: "tel:+9779851362001",
-  email: "hello@kodedristi.com",
+  email: "info@kodedristi.com",
   address: "Kathmandu, Nepal",
   officeHours: "10:00 AM – 6:00 PM",
   officeDays: "",

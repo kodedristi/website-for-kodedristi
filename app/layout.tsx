@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Albert_Sans } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { FirstLoadSplash } from "@/components/motion/first-load-splash";
 import { Navbar } from "@/components/site-header/navbar";
 import { Footer } from "@/components/site-footer/footer";
@@ -72,7 +71,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      suppressHydrationWarning
       className={`h-full antialiased ${albertSans.variable}`}
     >
       <head>
@@ -85,21 +83,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </noscript>
       </head>
       <body className="min-h-full flex flex-col bg-background text-text-secondary">
-        <ThemeProvider>
-          <SmoothScroll />
-          <FirstLoadSplash />
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-brand-blue focus:px-4 focus:py-2 focus:text-white"
-          >
-            Skip to content
-          </a>
-          <GlobalChrome navbar={<Navbar navGroups={liveNavGroups} />} footer={<Footer navGroups={liveNavGroups} />}>
-            {children}
-          </GlobalChrome>
-          <AnalyticsTracker />
-          <CookieConsent />
-        </ThemeProvider>
+        <SmoothScroll />
+        <FirstLoadSplash />
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-brand-blue focus:px-4 focus:py-2 focus:text-white"
+        >
+          Skip to content
+        </a>
+        <GlobalChrome navbar={<Navbar navGroups={liveNavGroups} />} footer={<Footer navGroups={liveNavGroups} />}>
+          {children}
+        </GlobalChrome>
+        <AnalyticsTracker />
+        <CookieConsent />
       </body>
     </html>
   );

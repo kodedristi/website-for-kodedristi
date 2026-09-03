@@ -28,11 +28,13 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
   const [reason, setReason] = useState<Reason>((initialReason as Reason) || "project");
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("submitting");
     setError(false);
+    setErrorMessage(null);
     const form = e.currentTarget;
     const data = new FormData(form);
     const value = (key: string) => data.get(key)?.toString() ?? "";
@@ -62,6 +64,24 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
       payload.title = value("proposalTitle");
       payload.description = value("proposalDescription");
       payload.amount = value("proposalAmount");
+
+      const doc = data.get("proposalDocument");
+      if (doc instanceof File && doc.size > 0) {
+        try {
+          const upload = new FormData();
+          upload.append("file", doc);
+          const res = await fetch("/api/contact/upload", { method: "POST", body: upload });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(json.error || "Document upload failed");
+          payload.documentUrl = json.url;
+          payload.documentName = json.name;
+        } catch (err) {
+          setStatus("idle");
+          setError(true);
+          setErrorMessage(err instanceof Error ? err.message : "Document upload failed.");
+          return;
+        }
+      }
     }
     try {
       const res = await fetch("/api/contact/submit", {
@@ -275,8 +295,20 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
                 required
                 rows={6}
                 className={fieldClasses}
-                placeholder="Describe your proposal in detail. Include scope, timeline, deliverables, and any supporting documents or links."
+                placeholder="Describe your proposal in detail — scope, timeline, deliverables and expected outcomes."
               />
+            </Field>
+            <Field label="Proposal document" htmlFor="proposalDocument" full>
+              <input
+                id="proposalDocument"
+                name="proposalDocument"
+                type="file"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.odt,.txt"
+                className="focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary file:mr-3 file:rounded-lg file:border-0 file:bg-brand-blue file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-blue-hover"
+              />
+              <p className="text-xs text-text-muted">
+                PDF, Word, PowerPoint, Excel or text — up to 10 MB. Optional.
+              </p>
             </Field>
           </>
         )}
@@ -284,7 +316,7 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
 
       {error && (
         <p className="rounded-xl border-[0.5px] border-brand-blue/30 bg-brand-blue/5 px-4 py-3 text-sm text-text-primary">
-          Something went wrong sending your request. Please try again.
+          {errorMessage ?? "Something went wrong sending your request. Please try again."}
         </p>
       )}
       <Button type="submit" size="lg" disabled={status === "submitting"} className="w-fit">
