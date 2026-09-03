@@ -384,6 +384,11 @@ export type SiteSettingsData = {
   officeHours: string;
   officeDays?: string;
   footerNote?: string;
+  facebook?: string;
+  linkedin?: string;
+  instagram?: string;
+  youtube?: string;
+  whatsapp?: string;
 };
 
 /**
@@ -1567,6 +1572,11 @@ CONTENT_SCHEMAS.push({
     { key: "officeHours", label: "Office hours", kind: "text", required: true, placeholder: "10:00 AM – 6:00 PM" },
     { key: "officeDays", label: "Office days", kind: "text", placeholder: "Sunday – Friday", helper: "Optional. Printed after the hours where there is room for it." },
     { key: "footerNote", label: "Footer strapline", kind: "text", helper: "The bold line at the end of the footer paragraph." },
+    { key: "facebook", label: "Facebook URL", kind: "url", helper: "Optional. Shown as a social icon in the footer. Leave empty to hide it." },
+    { key: "linkedin", label: "LinkedIn URL", kind: "url", helper: "Optional." },
+    { key: "instagram", label: "Instagram URL", kind: "url", helper: "Optional." },
+    { key: "youtube", label: "YouTube URL", kind: "url", helper: "Optional." },
+    { key: "whatsapp", label: "WhatsApp link", kind: "url", helper: "Optional. e.g. https://wa.me/9779851362001" },
   ],
   fallback: () => [
     {
@@ -1581,6 +1591,11 @@ CONTENT_SCHEMAS.push({
         officeHours: "10:00 AM – 6:00 PM",
         officeDays: "",
         footerNote: "#WithYouEveryStep",
+        facebook: "",
+        linkedin: "",
+        instagram: "",
+        youtube: "",
+        whatsapp: "",
       },
     },
   ],

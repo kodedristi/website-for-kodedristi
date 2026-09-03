@@ -51,7 +51,7 @@ import type {
 
 export type SolutionView = Omit<SolutionData, "icon"> & { slug: string; icon: LucideIcon };
 export type ProductView = Omit<ProductData, "icon"> & { slug: string; icon: LucideIcon };
-export type ContactDetailView = Omit<ContactDetailData, "icon"> & { icon: LucideIcon };
+export type ContactDetailView = Omit<ContactDetailData, "icon"> & { icon: LucideIcon; slug: string };
 export type HackathonHighlightView = Omit<HackathonHighlightData, "icon"> & { icon: LucideIcon };
 export type LaganiHighlightView = Omit<LaganiHighlightData, "icon"> & { icon: LucideIcon };
 export type NavGroup = { label: string; href: string; items: { label: string; href: string; description?: string }[] };
@@ -161,7 +161,7 @@ export async function getFaqs(group?: "learn" | "products"): Promise<(FaqData & 
 }
 export async function getContactDetails(): Promise<ContactDetailView[]> {
   const items = await listContent<ContactDetailData>("contact-detail");
-  return items.map((i) => ({ ...i.data, icon: iconForKey(i.data.icon) }));
+  return items.map((i) => ({ ...i.data, icon: iconForKey(i.data.icon), slug: i.slug ?? "" }));
 }
 export async function getHackathonHighlights(): Promise<HackathonHighlightView[]> {
   const items = await listContent<HackathonHighlightData>("hackathon-highlight");
@@ -372,6 +372,11 @@ export const SITE_SETTINGS_DEFAULTS: SiteSettingsData = {
   officeHours: "10:00 AM – 6:00 PM",
   officeDays: "",
   footerNote: "#WithYouEveryStep",
+  facebook: "",
+  linkedin: "",
+  instagram: "",
+  youtube: "",
+  whatsapp: "",
 };
 
 export async function getSiteSettings(): Promise<SiteSettingsData> {

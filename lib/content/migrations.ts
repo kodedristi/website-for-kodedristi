@@ -99,6 +99,29 @@ const MIGRATIONS: Migration[] = [
       await replaceField("home-final-cta", "main", "primaryHref", "/contact", "/contact?section=proposal");
     },
   },
+  {
+    id: "2026-09-dedupe-office-hours",
+    describe:
+      "Remove the stale 'hours' contact-detail row left behind when the seed slug became 'office-hours'.",
+    run: async () => {
+      // Both rows now read "Office Hours" — the earlier phone/hours migration
+      // renamed the original `hours` row, and the reworded seed added a fresh
+      // `office-hours` one beside it. Drop the original only when its
+      // replacement is present, so a database that only ever had `hours`
+      // keeps its single row.
+      await db.query(
+        `UPDATE content_items
+            SET deleted_at = now()
+          WHERE type = 'contact-detail'
+            AND slug = 'hours'
+            AND deleted_at IS NULL
+            AND EXISTS (
+              SELECT 1 FROM content_items
+               WHERE type = 'contact-detail' AND slug = 'office-hours' AND deleted_at IS NULL
+            )`
+      );
+    },
+  },
 ];
 
 /**
