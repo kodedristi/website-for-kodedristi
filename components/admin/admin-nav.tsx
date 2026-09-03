@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -73,6 +73,7 @@ type NavLinkSpec = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   exact: boolean;
+  badge?: number;
 };
 
 /** One sidebar link. `exact` matters for the two roots — `/admin` and
@@ -99,7 +100,18 @@ function NavLink({
       )}
     >
       <link.icon className="h-6.75 w-6.75" />
-      {link.label}
+      <span className="flex-1">{link.label}</span>
+      {link.badge ? (
+        <span
+          aria-label={`${link.badge} new`}
+          className={cn(
+            "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold",
+            active ? "bg-white text-brand-blue" : "bg-brand-green text-text-on-green"
+          )}
+        >
+          {link.badge > 99 ? "99+" : link.badge}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -107,14 +119,51 @@ function NavLink({
 export function AdminNav({
   adminName,
   contentGroups,
+  unreadSubmissions = 0,
 }: {
   adminName: string;
   contentGroups: AdminNavGroup[];
+  unreadSubmissions?: number;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const [unread, setUnread] = useState(unreadSubmissions);
+  const onSubmissions = pathname.startsWith("/admin/submissions");
+
+  // The panel layout persists across client-side navigation, so the count
+  // handed in at first load would otherwise never move. Poll a light endpoint
+  // to keep the badge honest, and re-check shortly after landing on the
+  // Submissions page (whose render marks everything read).
+  useEffect(() => {
+    let alive = true;
+    const check = async () => {
+      try {
+        const res = await fetch("/api/admin/submissions/unread-count", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (alive && typeof json.count === "number") setUnread(json.count);
+      } catch {
+        // offline / transient — keep the last known count
+      }
+    };
+    const delay = pathname.startsWith("/admin/submissions") ? 1500 : 0;
+    const first = setTimeout(check, delay);
+    const interval = setInterval(check, 45000);
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      clearInterval(interval);
+    };
+  }, [pathname]);
+
+  // While the admin is on the Submissions page the list is, by definition,
+  // read — don't flash the old count until the poll catches up.
+  const badgeCount = onSubmissions ? 0 : unread;
+  const secondary = SECONDARY.map((link) =>
+    link.href === "/admin/submissions" ? { ...link, badge: badgeCount } : link
+  );
 
   // `/admin/content/<type>` and everything nested under it.
   const activeType = pathname.startsWith("/admin/content/")
@@ -181,8 +230,13 @@ export function AdminNav({
           {open ? <Cancel01Icon className="h-6 w-6" /> : <Menu01Icon className="h-6 w-6" />}
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
         </button>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-sm font-bold text-white">
+        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-blue text-sm font-bold text-white">
           KD
+          {badgeCount > 0 && !open && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-green px-1 text-[10px] font-bold text-text-on-green">
+              {badgeCount > 99 ? "99+" : badgeCount}
+            </span>
+          )}
         </span>
         <p className="truncate text-sm font-semibold text-text-primary">KodeDristi admin</p>
       </div>
@@ -214,7 +268,7 @@ export function AdminNav({
           </nav>
 
           <nav className="flex flex-col gap-1 border-t border-border pt-3">
-            {SECONDARY.map((link) => (
+            {secondary.map((link) => (
               <NavLink key={link.href} link={link} pathname={pathname} onClick={close} />
             ))}
           </nav>

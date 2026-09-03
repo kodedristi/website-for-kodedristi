@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_submissions_section ON contact_submissions (section);
+-- Read/unread tracking for the admin notification badge. Added by ALTER so a
+-- database created before the column still gets it on the next boot.
+ALTER TABLE contact_submissions ADD COLUMN IF NOT EXISTS read_at timestamptz;
+CREATE INDEX IF NOT EXISTS idx_submissions_unread ON contact_submissions (id) WHERE read_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS user_courses (
   id bigserial PRIMARY KEY,

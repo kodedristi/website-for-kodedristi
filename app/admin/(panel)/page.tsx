@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { getAnalytics, listSubmissions, listUsersWithCourses } from "@/lib/db/queries";
+import {
+  getAnalytics,
+  listSubmissions,
+  listUsersWithCourses,
+  countUnreadSubmissions,
+} from "@/lib/db/queries";
 import { getTypeSummary } from "@/lib/content/store";
 import { SITE_PAGES } from "@/lib/content/site-map";
 import {
@@ -24,11 +29,12 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [analytics, submissions, users, content] = await Promise.all([
+  const [analytics, submissions, users, content, unreadSubmissions] = await Promise.all([
     getAnalytics(),
     listSubmissions(),
     listUsersWithCourses(),
     getTypeSummary(),
+    countUnreadSubmissions(),
   ]);
 
   const maxDaily = Math.max(1, ...analytics.daily.map((d) => d.visitors));
@@ -104,18 +110,21 @@ export default async function AdminDashboard() {
       label: "Submissions",
       description: `${submissions.length} enquiry${submissions.length === 1 ? "" : "s"}`,
       icon: InboxUnreadIcon,
+      badge: unreadSubmissions,
     },
     {
       href: "/admin/users",
       label: "Users",
       description: `${users.length} account${users.length === 1 ? "" : "s"}`,
       icon: GraduationScrollIcon,
+      badge: 0,
     },
     {
       href: "/admin/content",
       label: "All content types",
       description: `${contentCount} items across ${content.length} types`,
       icon: ChartBarLineIcon,
+      badge: 0,
     },
   ];
 
@@ -172,11 +181,23 @@ export default async function AdminDashboard() {
             className="focus-ring group card card-hover flex items-center justify-between gap-3 p-5"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-secondary text-text-secondary">
+              <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background-secondary text-text-secondary">
                 <sc.icon className="h-7.5 w-7.5" />
+                {sc.badge > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-green px-1 text-[11px] font-bold text-text-on-green">
+                    {sc.badge > 99 ? "99+" : sc.badge}
+                  </span>
+                )}
               </span>
               <div>
-                <p className="text-sm font-semibold text-text-primary">{sc.label}</p>
+                <p className="text-sm font-semibold text-text-primary">
+                  {sc.label}
+                  {sc.badge > 0 && (
+                    <span className="ml-1.5 text-xs font-semibold text-brand-green-hover">
+                      {sc.badge} new
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-text-muted">{sc.description}</p>
               </div>
             </div>

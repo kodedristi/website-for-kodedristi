@@ -177,7 +177,13 @@ async function getAnalyticsFromDb(): Promise<Analytics> {
 }
 
 export async function listSubmissions(): Promise<
-  { id: number; section: string; data: Record<string, unknown>; created_at: Date }[]
+  {
+    id: number;
+    section: string;
+    data: Record<string, unknown>;
+    created_at: Date;
+    read_at: Date | null;
+  }[]
 > {
   try {
     await ensureSchema();
@@ -186,12 +192,36 @@ export async function listSubmissions(): Promise<
       section: string;
       data: Record<string, unknown>;
       created_at: Date;
-    }>("SELECT id, section, data, created_at FROM contact_submissions ORDER BY id DESC LIMIT 300");
+      read_at: Date | null;
+    }>(
+      "SELECT id, section, data, created_at, read_at FROM contact_submissions ORDER BY id DESC LIMIT 300"
+    );
     return res.rows;
   } catch (err) {
     logFallback("submissions", err);
     return [];
   }
+}
+
+/** How many submissions no admin has opened yet — drives the sidebar badge. */
+export async function countUnreadSubmissions(): Promise<number> {
+  try {
+    await ensureSchema();
+    const res = await db.query<{ count: number }>(
+      "SELECT count(*)::int AS count FROM contact_submissions WHERE read_at IS NULL"
+    );
+    return res.rows[0]?.count ?? 0;
+  } catch (err) {
+    logFallback("unread submissions", err);
+    return 0;
+  }
+}
+
+/** Stamp every still-unread submission as read. Called when the admin opens
+ *  the Submissions page. */
+export async function markSubmissionsRead(): Promise<void> {
+  await ensureSchema();
+  await db.query("UPDATE contact_submissions SET read_at = now() WHERE read_at IS NULL");
 }
 
 export async function listUsersWithCourses(): Promise<

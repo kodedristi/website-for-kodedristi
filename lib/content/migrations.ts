@@ -122,6 +122,14 @@ const MIGRATIONS: Migration[] = [
       );
     },
   },
+  {
+    id: "2026-09-submissions-read-backfill",
+    describe:
+      "Mark every submission that predates the read/unread feature as read, so the new badge starts at zero.",
+    run: async () => {
+      await db.query("UPDATE contact_submissions SET read_at = now() WHERE read_at IS NULL");
+    },
+  },
 ];
 
 /**
