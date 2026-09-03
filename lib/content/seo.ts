@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { getPageSeo } from "@/lib/content/resolvers";
 
-export const SITE_URL = "https://official-kd.vercel.app";
+/**
+ * Canonical origin for every absolute URL the site emits — metadata base,
+ * sitemap, robots, JSON-LD. One constant so a domain change is one edit.
+ * Override per environment with NEXT_PUBLIC_SITE_URL (no trailing slash).
+ */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://kodedristi.com"
+).replace(/\/+$/, "");
 
 /**
  * Builds a page's `<head>` from its CMS row, falling back to what the page

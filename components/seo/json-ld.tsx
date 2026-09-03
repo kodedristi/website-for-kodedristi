@@ -1,5 +1,6 @@
 import Script from "next/script";
 import { getSiteSettings } from "@/lib/content/resolvers";
+import { SITE_URL } from "@/lib/content/seo";
 
 type OrganizationLD = {
   type: "Organization";
@@ -99,8 +100,8 @@ export async function OrganizationJsonLd() {
       schema={{
         type: "Organization",
         name: settings.companyName,
-        url: "https://official-kd.vercel.app",
-        logo: "https://official-kd.vercel.app/og-default.png",
+        url: SITE_URL,
+        logo: `${SITE_URL}/og-default.png`,
         description:
           "Software delivery, AI automation, and applied IT courses in Kathmandu, Nepal.",
         address: {
@@ -139,7 +140,7 @@ export function CourseJsonLd({
         description,
         provider: {
           name: "KodeDristi Software",
-          sameAs: "https://official-kd.vercel.app",
+          sameAs: SITE_URL,
         },
         url,
         educationalLevel: level || "Intermediate",
@@ -175,11 +176,11 @@ export function ArticleJsonLd({
         author: { name: author },
         publisher: {
           name: "KodeDristi Software",
-          logo: { url: "https://official-kd.vercel.app/og-default.png" },
+          logo: { url: `${SITE_URL}/og-default.png` },
         },
         datePublished,
         dateModified: dateModified || datePublished,
-        image: image || "https://official-kd.vercel.app/og-default.png",
+        image: image || `${SITE_URL}/og-default.png`,
         url,
       }}
     />
@@ -214,10 +215,10 @@ export function WebSiteJsonLd() {
       schema={{
         type: "WebSite",
         name: "KodeDristi Software",
-        url: "https://official-kd.vercel.app",
+        url: SITE_URL,
         potentialAction: {
           type: "SearchAction",
-          target: "https://official-kd.vercel.app/insights?q={search_term_string}",
+          target: `${SITE_URL}/insights?q={search_term_string}`,
           "query-input": "required name=search_term_string",
         },
       }}

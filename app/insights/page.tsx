@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buildPageMetadata } from "@/lib/content/seo";
+import { buildPageMetadata, SITE_URL } from "@/lib/content/seo";
 import { PageHero } from "@/components/ui/page-hero";
 import {
   ShowcaseCard,
@@ -46,7 +46,7 @@ export default async function InsightsPage() {
           description={article.excerpt}
           author="KodeDristi Team"
           datePublished={article.date}
-          url={`https://official-kd.vercel.app/insights/${article.slug}`}
+          url={`${SITE_URL}/insights/${article.slug}`}
         />
       ))}
       <PageHero eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />

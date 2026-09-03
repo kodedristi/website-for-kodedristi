@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buildPageMetadata } from "@/lib/content/seo";
+import { buildPageMetadata, SITE_URL } from "@/lib/content/seo";
 import { ArrowRight, Clock, Signal } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
 import { Container } from "@/components/ui/container";
@@ -52,7 +52,7 @@ export default async function LearnPage() {
           key={course.slug}
           name={course.name}
           description={course.summary}
-          url={`https://official-kd.vercel.app/learn/${course.slug}`}
+          url={`${SITE_URL}/learn/${course.slug}`}
           level={course.level}
         />
       ))}

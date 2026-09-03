@@ -10,6 +10,7 @@ import { AnalyticsTracker } from "@/components/auth/analytics-tracker";
 import { CookieConsent } from "@/components/auth/cookie-consent";
 import { navGroups } from "@/lib/data/nav";
 import { getSolutions } from "@/lib/content/resolvers";
+import { SITE_URL } from "@/lib/content/seo";
 
 const albertSans = Albert_Sans({
   subsets: ["latin"],
@@ -18,7 +19,7 @@ const albertSans = Albert_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://official-kd.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "KodeDristi Software — Software Delivery, AI & Courses",
     template: "%s — KodeDristi Software",

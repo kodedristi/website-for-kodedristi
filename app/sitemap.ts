@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { listContent } from "@/lib/content/store";
 import type { ArticleData } from "@/lib/content/schemas";
-
-const BASE = "https://official-kd.vercel.app";
+import { SITE_URL as BASE } from "@/lib/content/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
