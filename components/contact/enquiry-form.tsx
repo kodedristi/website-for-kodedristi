@@ -24,8 +24,22 @@ const fieldClasses =
   "focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-brand-blue";
 const labelClasses = "text-sm font-medium text-text-secondary";
 
-export function EnquiryForm({ initialReason }: { initialReason?: string }) {
-  const [reason, setReason] = useState<Reason>((initialReason as Reason) || "project");
+export function EnquiryForm({
+  initialReason,
+  lockReason,
+  className,
+}: {
+  initialReason?: string;
+  /** When set, the reason tabs are hidden and the form is fixed to this one
+   *  kind of enquiry — used for the homepage's embedded proposal form. */
+  lockReason?: Reason;
+  /** Extra classes for the outer card — e.g. a solid surface where the form
+   *  sits on a tinted panel and the default `card` fill would blend in. */
+  className?: string;
+}) {
+  const [reason, setReason] = useState<Reason>(
+    lockReason ?? (initialReason as Reason) ?? "project"
+  );
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -99,7 +113,7 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
 
   if (status === "submitted") {
     return (
-      <div className="flex flex-col items-center gap-3 card p-10 text-center">
+      <div className={cn("flex flex-col items-center gap-3 card p-10 text-center", className)}>
         <CheckmarkCircle02Icon className="h-12 w-12 text-brand-green-hover" />
         <h3 className="text-xl font-semibold text-text-primary">Thanks — we&apos;ve got it.</h3>
         <p className="max-w-sm text-sm leading-relaxed text-text-muted">
@@ -114,26 +128,31 @@ export function EnquiryForm({ initialReason }: { initialReason?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 card p-6 sm:p-8">
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="Reason for contact">
-        {REASONS.map((r) => (
-          <button
-            key={r.key}
-            type="button"
-            role="tab"
-            aria-selected={reason === r.key}
-            onClick={() => setReason(r.key)}
-            className={cn(
-              "focus-ring rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-              reason === r.key
-                ? "border-brand-blue bg-brand-blue text-white"
-                : "border-border bg-background text-text-secondary hover:border-brand-blue/40"
-            )}
-          >
-            {r.label}
-          </button>
-        ))}
-      </div>
+    <form
+      onSubmit={handleSubmit}
+      className={cn("flex flex-col gap-6 card p-6 sm:p-8", className)}
+    >
+      {!lockReason && (
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Reason for contact">
+          {REASONS.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              role="tab"
+              aria-selected={reason === r.key}
+              onClick={() => setReason(r.key)}
+              className={cn(
+                "focus-ring rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+                reason === r.key
+                  ? "border-brand-blue bg-brand-blue text-white"
+                  : "border-border bg-background text-text-secondary hover:border-brand-blue/40"
+              )}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Full name" htmlFor="name">
