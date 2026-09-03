@@ -39,6 +39,10 @@ export const metadata: Metadata = {
       "Web & mobile apps, SaaS products, AI automation, custom software and applied IT courses. #WithYouEveryStep",
     siteName: "KodeDristi Software",
     type: "website",
+    images: ["/images/logo.png"],
+  },
+  twitter: {
+    card: "summary",
   },
 };
 

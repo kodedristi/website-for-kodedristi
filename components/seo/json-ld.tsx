@@ -2,6 +2,10 @@ import Script from "next/script";
 import { getSiteSettings } from "@/lib/content/resolvers";
 import { SITE_URL } from "@/lib/content/seo";
 
+/** The brand mark, absolute. Used for the Schema.org logo/image fields and
+ *  as the share-card fallback where a page has no image of its own. */
+const LOGO_URL = `${SITE_URL}/images/logo.png`;
+
 type OrganizationLD = {
   type: "Organization";
   name: string;
@@ -95,13 +99,16 @@ export function JsonLd({ schema }: { schema: Schema | Schema[] }) {
  */
 export async function OrganizationJsonLd() {
   const settings = await getSiteSettings();
+  const sameAs = [settings.facebook, settings.instagram, settings.tiktok, settings.linkedin]
+    .map((u) => u?.trim())
+    .filter((u): u is string => Boolean(u));
   return (
     <JsonLd
       schema={{
         type: "Organization",
         name: settings.companyName,
         url: SITE_URL,
-        logo: `${SITE_URL}/og-default.png`,
+        logo: LOGO_URL,
         description:
           "Software delivery, AI automation, and applied IT courses in Kathmandu, Nepal.",
         address: {
@@ -115,7 +122,7 @@ export async function OrganizationJsonLd() {
           telephone: settings.phoneHref.replace(/^tel:/, "") || settings.phone,
           contactType: "customer service",
         },
-        sameAs: [],
+        sameAs,
       }}
     />
   );
@@ -176,11 +183,11 @@ export function ArticleJsonLd({
         author: { name: author },
         publisher: {
           name: "KodeDristi Software",
-          logo: { url: `${SITE_URL}/og-default.png` },
+          logo: { url: LOGO_URL },
         },
         datePublished,
         dateModified: dateModified || datePublished,
-        image: image || `${SITE_URL}/og-default.png`,
+        image: image || LOGO_URL,
         url,
       }}
     />

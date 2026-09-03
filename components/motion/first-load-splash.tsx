@@ -22,8 +22,11 @@ import { AnimatePresence, motion } from "framer-motion";
  * `prefers-reduced-motion` it only flashes quietly before yielding.
  */
 
-const MIN_HOLD_MS = 1800;
-const MAX_WAIT_MS = 3200;
+// Kept short on purpose: the splash covers the first paint, so every extra
+// millisecond here is a millisecond the visitor stares at a logo instead of
+// the site. Long enough for the mark's own settle to read, no longer.
+const MIN_HOLD_MS = 900;
+const MAX_WAIT_MS = 2200;
 
 function prefersReducedMotion() {
   return (

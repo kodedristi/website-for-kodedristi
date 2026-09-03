@@ -33,7 +33,7 @@ export default async function AdminHomepagePage() {
 
   const sections: ManagerSection[] = rows.map((row) => {
     const key = row.data.type ?? row.slug ?? "";
-    const module = getHomepageModule(key);
+    const mod = getHomepageModule(key);
     return {
       id: row.id,
       slug: row.slug ?? key,
@@ -41,13 +41,13 @@ export default async function AdminHomepagePage() {
       // The module's own name wins over the stored label: the stored one is
       // a copy made when the row was seeded, and it is the module registry
       // that gets renamed when a section is renamed.
-      label: module?.label ?? row.data.label ?? key,
-      description: module?.description ?? "No matching section is registered for this row.",
-      preview: module?.preview ?? "/",
-      locked: Boolean(module?.locked),
+      label: mod?.label ?? row.data.label ?? key,
+      description: mod?.description ?? "No matching section is registered for this row.",
+      preview: mod?.preview ?? "/",
+      locked: Boolean(mod?.locked),
       enabled: row.data.enabled !== false,
-      parts: module ? resolveParts(module.parts, counts) : [],
-      unknown: !module,
+      parts: mod ? resolveParts(mod.parts, counts) : [],
+      unknown: !mod,
     };
   });
 

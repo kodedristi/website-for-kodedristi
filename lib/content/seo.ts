@@ -51,7 +51,10 @@ export async function buildPageMetadata(
   const title = pick(seo?.seoTitle) ?? defaults.title;
   const description = pick(seo?.metaDescription) ?? defaults.description;
   const canonical = pick(seo?.canonicalUrl) ?? defaults.path;
-  const ogImage = pick(seo?.ogImage);
+  // The page's own share image when the admin has set one, otherwise the
+  // brand mark — a page metadata object replaces the layout's openGraph
+  // rather than deep-merging its `images`, so every page has to carry one.
+  const ogImage = pick(seo?.ogImage) ?? "/images/logo.png";
 
   const metadata: Metadata = {
     title: defaults.absoluteTitle ? { absolute: title } : title,
@@ -62,9 +65,7 @@ export async function buildPageMetadata(
       description: pick(seo?.ogDescription) ?? description,
       url: canonical,
       type: "website",
-      ...(ogImage
-        ? { images: [{ url: ogImage, alt: pick(seo?.ogImageAlt) ?? title }] }
-        : {}),
+      images: [{ url: ogImage, alt: pick(seo?.ogImageAlt) ?? title }],
     },
   };
 
