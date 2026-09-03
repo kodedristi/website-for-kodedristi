@@ -9,7 +9,7 @@ const fieldClasses =
   "focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-brand-blue";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  google_unconfigured: "Google sign-in is not configured yet. Use the credentials form.",
+  google_unconfigured: "Google sign-in is not configured yet. Use the password form.",
   google_failed: "Google sign-in failed. Please try again.",
 };
 
@@ -27,6 +27,10 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(
     serverError ? (ERROR_MESSAGES[serverError] ?? serverError) : null
   );
+  // With Google configured it is the expected way in for everyone, admin
+  // included — the password form is a fallback, revealed only on request so
+  // it is never the first thing a visitor who wandered here sees.
+  const [showPassword, setShowPassword] = useState(!googleConfigured || Boolean(serverError));
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -66,64 +70,76 @@ export function LoginForm({
       )}
 
       {googleConfigured && (
-        <>
-          <a
-            href="/api/auth/google"
-            className="focus-ring mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border-[0.5px] border-border bg-white font-semibold text-text-primary shadow-sm transition-colors hover:bg-background-secondary"
-          >
-            <GoogleLogo className="h-4 w-4" /> Continue with Google
-          </a>
-          <div className="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
-            <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
-          </div>
-        </>
+        <a
+          href="/api/auth/google"
+          className="focus-ring mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border-[0.5px] border-border bg-white font-semibold text-text-primary shadow-sm transition-colors hover:bg-background-secondary"
+        >
+          <GoogleLogo className="h-4 w-4" /> Continue with Google
+        </a>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="admin-email" className="text-sm font-medium text-text-secondary">
-            Email
-          </label>
-          <input
-            id="admin-email"
-            type="email"
-            required
-            autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={fieldClasses}
-            placeholder="admin@kodedristi.com"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="admin-password" className="text-sm font-medium text-text-secondary">
-            Password
-          </label>
-          <input
-            id="admin-password"
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={fieldClasses}
-            placeholder="••••••••"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="focus-ring mt-1 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-blue font-semibold text-white transition-colors hover:bg-brand-blue-hover disabled:opacity-60"
-        >
-          {loading ? (
-            <>
-              <Loading01Icon className="h-6 w-6 animate-spin" /> Signing in
-            </>
-          ) : (
-            "Sign in to Dashboard"
+      {showPassword ? (
+        <>
+          {googleConfigured && (
+            <div className="my-6 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+              <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+            </div>
           )}
+          <form onSubmit={handleSubmit} className={googleConfigured ? "flex flex-col gap-4" : "mt-6 flex flex-col gap-4"}>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="admin-email" className="text-sm font-medium text-text-secondary">
+                Email
+              </label>
+              <input
+                id="admin-email"
+                type="email"
+                required
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={fieldClasses}
+                placeholder="admin@kodedristi.com"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="admin-password" className="text-sm font-medium text-text-secondary">
+                Password
+              </label>
+              <input
+                id="admin-password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={fieldClasses}
+                placeholder="••••••••"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="focus-ring mt-1 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-brand-blue font-semibold text-white transition-colors hover:bg-brand-blue-hover disabled:opacity-60"
+            >
+              {loading ? (
+                <>
+                  <Loading01Icon className="h-6 w-6 animate-spin" /> Signing in
+                </>
+              ) : (
+                "Sign in to Dashboard"
+              )}
+            </button>
+          </form>
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowPassword(true)}
+          className="focus-ring mt-4 w-full text-center text-xs font-semibold text-text-muted underline underline-offset-2 hover:text-text-secondary"
+        >
+          Sign in with a password instead
         </button>
-      </form>
+      )}
     </div>
   );
 }
