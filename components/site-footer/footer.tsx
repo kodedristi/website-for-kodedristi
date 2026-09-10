@@ -164,7 +164,7 @@ export async function Footer({ navGroups }: { navGroups: NavGroup[] }) {
           </div>
           <Link
             href="/contact?section=proposal"
-            className="focus-ring inline-flex shrink-0 items-center gap-2 rounded-control bg-brand-green px-5 py-2.5 text-sm font-semibold text-text-on-green transition-colors hover:bg-brand-green-hover"
+            className="focus-ring inline-flex shrink-0 items-center gap-2 rounded-control bg-brand-green-hover px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-green"
           >
             Send a proposal <ArrowRight01Icon className="h-5 w-5" />
           </Link>
