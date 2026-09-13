@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   keywords: [
   // Brand
   "Kodedristi",
-  "KodeDristi Software",
+  "Kodedristi Software",
   "Kodedristi Software Pvt Ltd",
   "Kodedristi Nepal",
   "Kodedristi Software Nepal",

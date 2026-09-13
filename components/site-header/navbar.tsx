@@ -80,7 +80,7 @@ export function Navbar({ navGroups }: { navGroups: NavGroup[] }) {
               <span className="hidden rounded-full bg-white/15 px-2 py-0.5 font-semibold uppercase tracking-wide sm:inline">
                 Next cohort
               </span>
-              <span>AI &amp; Machine Learning Bootcamp starts 1 September — limited seats.</span>
+              <span>AI &amp; Machine Learning Bootcamp starts 1 January 2027 — limited seats.</span>
               {/* Points at contact, not at the course page. Courses are
                   presented on the homepage now and their detail pages are no
                   longer linked from anywhere in the header. */}
