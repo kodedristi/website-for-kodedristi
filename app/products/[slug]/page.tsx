@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { getProduct, getProducts } from "@/lib/content/resolvers";
 import { buildDetailMetadata } from "@/lib/content/seo";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { AnswerFaq } from "@/components/seo/answer-faq";
+import { productAnswers } from "@/lib/content/answers";
 
 export const revalidate = 3600;
 
@@ -44,6 +47,7 @@ export default async function ProductDetailPage({
   const Icon = product.icon;
   const isBlue = product.accent === "blue";
   const all = await getProducts();
+  const { quick, faqs } = productAnswers(product);
   const other = all.filter((p) => p.slug !== product.slug).slice(0, 3);
 
   return (
@@ -59,6 +63,8 @@ export default async function ProductDetailPage({
           Talk to Us About {product.name} <ArrowRight className="h-4 w-4" />
         </Button>
       </PageHero>
+
+      <QuickAnswer>{quick}</QuickAnswer>
 
       <section className="py-20 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[1fr_320px]">
@@ -132,6 +138,8 @@ export default async function ProductDetailPage({
           </aside>
         </Container>
       </section>
+
+      <AnswerFaq title={`${product.name}: common questions`} items={faqs} />
     </>
   );
 }

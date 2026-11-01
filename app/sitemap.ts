@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 import { listContent } from "@/lib/content/store";
 import { SEO_PAGES, type PageSeoData } from "@/lib/content/schemas";
 import { SITE_URL as BASE, absoluteUrl } from "@/lib/content/seo";
+import { INDUSTRIES } from "@/lib/data/industries";
+import { getAuthors } from "@/lib/content/authors";
 
 /** Content types that own a `/<segment>/<slug>` page. */
 const DETAIL_ROUTES: { type: string; segment: string }[] = [
@@ -62,5 +64,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  return [...staticPages, ...detailGroups.flat()];
+  // Industry pages are defined in code, not the CMS.
+  const industryPages: MetadataRoute.Sitemap = INDUSTRIES.map((i) => ({
+    url: `${BASE}/industries/${i.slug}`,
+  }));
+
+  // Author profiles exist only for team members with an article.
+  let authorPages: MetadataRoute.Sitemap = [];
+  try {
+    authorPages = (await getAuthors()).map((a) => ({ url: `${BASE}/team/${a.member.slug}` }));
+  } catch {
+    // DB down - no author pages this time.
+  }
+
+  return [...staticPages, ...industryPages, ...authorPages, ...detailGroups.flat()];
 }

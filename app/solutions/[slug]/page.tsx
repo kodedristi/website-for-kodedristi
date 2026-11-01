@@ -7,8 +7,12 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getSolution, getSolutions } from "@/lib/content/resolvers";
-import { buildDetailMetadata } from "@/lib/content/seo";
-import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
+import { BreadcrumbJsonLd, ServiceJsonLd } from "@/components/seo/json-ld";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { AnswerFaq } from "@/components/seo/answer-faq";
+import { solutionAnswers } from "@/lib/content/answers";
+import { SOLUTION_SEO } from "@/lib/data/solution-seo";
 
 export const revalidate = 3600;
 
@@ -25,9 +29,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const solution = await getSolution(slug);
   if (!solution) return {};
+  // Search-facing title/description where one is defined; the CMS name and
+  // tagline otherwise.
+  const seo = SOLUTION_SEO[solution.slug];
   return buildDetailMetadata({
-    title: solution.name,
-    description: solution.tagline,
+    title: seo?.title ?? solution.name,
+    description: seo?.description ?? solution.tagline,
     path: `/solutions/${solution.slug}`,
     image: solution.image,
   });
@@ -46,9 +53,16 @@ export default async function SolutionDetailPage({
   const isBlue = solution.accent === "blue";
   const all = await getSolutions();
   const other = all.filter((s) => s.slug !== solution.slug).slice(0, 3);
+  const { quick, faqs } = solutionAnswers(solution);
 
   return (
     <>
+      <ServiceJsonLd
+        name={SOLUTION_SEO[solution.slug]?.title ?? solution.name}
+        description={SOLUTION_SEO[solution.slug]?.description ?? solution.tagline}
+        url={`${SITE_URL}/solutions/${solution.slug}`}
+        serviceType={solution.name}
+      />
       <BreadcrumbJsonLd
         trail={[
           { name: "Solutions", path: "/solutions" },
@@ -65,6 +79,8 @@ export default async function SolutionDetailPage({
           </Button>
         </div>
       </PageHero>
+
+      <QuickAnswer>{quick}</QuickAnswer>
 
       <section className="py-20 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[1fr_320px]">
@@ -132,6 +148,8 @@ export default async function SolutionDetailPage({
           </aside>
         </Container>
       </section>
+
+      <AnswerFaq title={`${solution.name}: common questions`} items={faqs} />
     </>
   );
 }

@@ -7,8 +7,11 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ui/project-card";
 import { getProject, getProjects } from "@/lib/content/resolvers";
-import { buildDetailMetadata } from "@/lib/content/seo";
-import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import Link from "next/link";
+import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { parseMetrics, projectAnswers } from "@/lib/content/answers";
+import { industryForProject } from "@/lib/data/industries";
 
 export const revalidate = 3600;
 
@@ -43,6 +46,9 @@ export default async function ProjectCaseStudyPage({
   if (!project) notFound();
 
   const meta = [project.client, project.industry, project.year].filter(Boolean);
+  const glance = projectAnswers(project);
+  const metrics = parseMetrics(project.metrics);
+  const industry = industryForProject(project.industry);
   const all = await getProjects();
   const others = all.filter((p) => p.slug !== project.slug).slice(0, 3);
 
@@ -66,6 +72,14 @@ export default async function ProjectCaseStudyPage({
 
   return (
     <>
+      <ArticleJsonLd
+        title={`${project.name}: case study`}
+        description={glance.result || project.tagline}
+        author="Kodedristi Software"
+        datePublished={project.year ?? ""}
+        image={project.image}
+        url={`${SITE_URL}/projects/${project.slug}`}
+      />
       <BreadcrumbJsonLd
         trail={[
           { name: "Projects", path: "/projects" },
@@ -79,6 +93,40 @@ export default async function ProjectCaseStudyPage({
           </Button>
         )}
       </PageHero>
+
+      {(glance.problem || glance.solution || glance.result) && (
+        <section className="border-b border-border bg-surface">
+          <Container className="grid gap-6 py-8 md:grid-cols-3">
+            {[
+              { label: "Challenge", text: glance.problem },
+              { label: "Solution", text: glance.solution },
+              { label: "Result", text: glance.result },
+            ]
+              .filter((b) => b.text)
+              .map((b) => (
+                <div key={b.label}>
+                  <p className="eyebrow text-link">{b.label}</p>
+                  <p className="mt-2 text-[15px] leading-relaxed text-text-primary">{b.text}</p>
+                </div>
+              ))}
+          </Container>
+        </section>
+      )}
+
+      {metrics.length > 0 && (
+        <section className="border-b border-border">
+          <Container className="py-10">
+            <dl className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {metrics.map((m) => (
+                <div key={m.label}>
+                  <dt className="text-sm text-text-muted">{m.label}</dt>
+                  <dd className="mt-1 text-3xl font-bold tracking-tight text-text-primary">{m.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Container>
+        </section>
+      )}
 
       {project.image && (
         <section className="border-b border-border bg-surface">
@@ -137,6 +185,34 @@ export default async function ProjectCaseStudyPage({
           ))}
         </Container>
       </section>
+
+      {project.quote?.trim() && (
+        <section className="section bg-background-secondary">
+          <Container>
+            <figure className="max-w-3xl">
+              <blockquote className="text-[22px] font-medium leading-snug tracking-[-0.01em] text-text-primary">
+                &ldquo;{project.quote.trim()}&rdquo;
+              </blockquote>
+              {project.quoteAuthor?.trim() && (
+                <figcaption className="mt-4 text-sm text-text-muted">{project.quoteAuthor.trim()}</figcaption>
+              )}
+            </figure>
+          </Container>
+        </section>
+      )}
+
+      {industry && (
+        <section className="section">
+          <Container>
+            <p className="text-sm text-text-muted">
+              More {industry.name.toLowerCase()} work and how we approach it:{" "}
+              <Link href={`/industries/${industry.slug}`} className="focus-ring font-semibold text-link">
+                {industry.title}
+              </Link>
+            </p>
+          </Container>
+        </section>
+      )}
 
       {others.length > 0 && (
         <section className="section bg-background-secondary">

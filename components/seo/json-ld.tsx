@@ -124,6 +124,7 @@ export function ArticleJsonLd({
   title,
   description,
   author,
+  authorUrl,
   datePublished,
   dateModified,
   image,
@@ -132,6 +133,9 @@ export function ArticleJsonLd({
   title: string;
   description: string;
   author: string;
+  /** Set when `author` is a named person with a profile page; the byline is
+   *  then a Person rather than the company. */
+  authorUrl?: string;
   datePublished: string;
   dateModified?: string;
   image?: string;
@@ -147,7 +151,9 @@ export function ArticleJsonLd({
         "@type": "Article",
         headline: title,
         description,
-        author: { "@type": "Organization", name: author, url: SITE_URL },
+        author: authorUrl
+          ? { "@type": "Person", name: author, url: authorUrl, worksFor: { "@id": `${SITE_URL}/#organization` } }
+          : { "@type": "Organization", name: author, url: SITE_URL },
         publisher: {
           "@type": "Organization",
           name: ORG_NAME,
@@ -232,6 +238,35 @@ export function ServiceJsonLd({
   );
 }
 
+export function PersonJsonLd({
+  name,
+  jobTitle,
+  description,
+  image,
+  url,
+}: {
+  name: string;
+  jobTitle?: string;
+  description?: string;
+  image?: string;
+  url: string;
+}) {
+  return (
+    <JsonLd
+      schema={{
+        "@type": "Person",
+        "@id": `${url}#person`,
+        name,
+        url,
+        ...(jobTitle ? { jobTitle } : {}),
+        ...(description ? { description } : {}),
+        ...(image ? { image: absoluteUrl(image) } : {}),
+        worksFor: { "@id": `${SITE_URL}/#organization` },
+      }}
+    />
+  );
+}
+
 export function WebSiteJsonLd() {
   return (
     <JsonLd
@@ -239,6 +274,8 @@ export function WebSiteJsonLd() {
         "@type": "WebSite",
         "@id": `${SITE_URL}/#website`,
         name: ORG_NAME,
+        // The names Google may show above the result, in place of the domain.
+        alternateName: ["Kodedristi", "Kodedristi Software Pvt. Ltd."],
         url: SITE_URL,
         publisher: { "@id": `${SITE_URL}/#organization` },
       }}

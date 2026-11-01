@@ -57,6 +57,7 @@ export const navGroups: NavGroup[] = [
     href: "/projects",
     items: [
       { label: "All Projects", href: "/projects", description: "Case studies from problem to business result." },
+      { label: "Industries", href: "/industries", description: "Software for fintech, healthcare, education and more." },
       { label: "Solutions", href: "/solutions", description: "The delivery tracks behind the work." },
     ],
   },
