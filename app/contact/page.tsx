@@ -5,6 +5,7 @@ import { Container } from "@/components/ui/container";
 import { EnquiryForm } from "@/components/contact/enquiry-form";
 import { getContactDetails } from "@/lib/content/resolvers";
 import { getPageHero } from "@/lib/content/resolvers";
+import { BreadcrumbJsonLd, OrganizationJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -16,9 +17,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("contact", {
-    title: "Contact",
+    title: "Contact — Hire a Software Company in Nepal",
     description:
-      "Start a project, apply for a course, or propose a partnership with KodeDristi Software.",
+      "Talk to Kodedristi about custom software, web & mobile apps, SaaS, AI, outsourcing or white-label development. Based in Kathmandu, Nepal.",
     path: "/contact",
   });
 }
@@ -36,6 +37,10 @@ export default async function ContactPage({
 
   return (
     <>
+      {/* The page search engines read the business name, address and phone
+          from, so the same NAP the footer shows is stated here as data. */}
+      <OrganizationJsonLd />
+      <BreadcrumbJsonLd trail={[{ name: "Contact", path: "/contact" }]} />
       <PageHero
         eyebrow={hero?.eyebrow ?? "Contact"}
         title={hero?.title ?? "Let's talk about what you're building"}

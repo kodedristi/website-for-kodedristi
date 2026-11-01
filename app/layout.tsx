@@ -21,12 +21,25 @@ const albertSans = Albert_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: " Kodedristi Software — AI Products, Custom Software & IT Consulting",
+    default: "Kodedristi Software — Premium Software Company in Nepal",
     template: "%s — Kodedristi Software",
   },
   description:
-    "Kodedristi Software Pvt. Ltd. builds web and mobile apps, SaaS products, AI solutions and custom software, while offering practical IT courses in Nepal.",
+    "Kodedristi Software Pvt. Ltd. is a premium software company in Nepal building web and mobile apps, SaaS products, AI solutions and custom software, with software outsourcing, white-label development and IT courses.",
   keywords: [
+  // Outsourcing / white label
+  "software outsourcing Nepal",
+  "IT outsourcing Nepal",
+  "outsource software development to Nepal",
+  "white label software development",
+  "white label software development Nepal",
+  "white label app development",
+  "dedicated development team Nepal",
+  "offshore software development Nepal",
+  "premium software company Nepal",
+  "best software company in Nepal",
+  "top software company Nepal",
+
   // Brand
   "Kodedristi",
   "Kodedristi Software",
@@ -168,10 +181,11 @@ export const metadata: Metadata = {
       "Kodedristi Software Pvt. Ltd. builds web and mobile apps, SaaS products, AI solutions and custom software, while offering practical IT courses in Nepal.",
     siteName: "Kodedristi Software",
     type: "website",
-    images: ["/images/logo.png"],
+    images: ["/opengraph-image"],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
+    images: ["/opengraph-image"],
   },
 };
 

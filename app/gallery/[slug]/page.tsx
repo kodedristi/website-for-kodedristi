@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/container";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
 import { GalleryPhotoCard } from "@/components/gallery/gallery-photo-card";
 import { getGalleries, getGallery, getGalleryPhotos } from "@/lib/content/resolvers";
+import { buildDetailMetadata } from "@/lib/content/seo";
 
 export const revalidate = 3600;
 
@@ -23,10 +24,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const gallery = await getGallery(slug);
   if (!gallery) return {};
-  return {
+  return buildDetailMetadata({
     title: gallery.name,
     description: gallery.description,
-  };
+    path: `/gallery/${gallery.slug}`,
+    image: gallery.coverImage,
+  });
 }
 
 export default async function GalleryDetailPage({

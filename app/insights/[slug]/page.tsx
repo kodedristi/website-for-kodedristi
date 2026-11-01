@@ -6,6 +6,8 @@ import { PageHero } from "@/components/ui/page-hero";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getArticle, getArticles } from "@/lib/content/resolvers";
+import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -22,7 +24,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const article = await getArticle(slug);
   if (!article) return {};
-  return { title: article.title, description: article.excerpt };
+  return buildDetailMetadata({
+    title: article.title,
+    description: article.excerpt,
+    path: `/insights/${article.slug}`,
+    image: article.image,
+    article: { publishedTime: article.date, section: article.category },
+  });
 }
 
 export default async function ArticleDetailPage({
@@ -39,6 +47,20 @@ export default async function ArticleDetailPage({
 
   return (
     <>
+      <ArticleJsonLd
+        title={article.title}
+        description={article.excerpt}
+        author="KodeDristi Team"
+        datePublished={article.date}
+        image={article.image}
+        url={`${SITE_URL}/insights/${article.slug}`}
+      />
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Insights", path: "/insights" },
+          { name: article.title, path: `/insights/${article.slug}` },
+        ]}
+      />
       <PageHero eyebrow={article.category} title={article.title}>
         <div className="flex items-center gap-4 text-sm font-medium text-text-muted">
           <span className="flex items-center gap-1.5">

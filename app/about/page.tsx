@@ -22,9 +22,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("about", {
-    title: "About",
+    title: "About Us — Software Company in Nepal",
     description:
-      "KodeDristi's mission, values, leadership, capabilities and work culture — the company behind #WithYouEveryStep.",
+      "About Kodedristi, a software development company in Kathmandu, Nepal: our mission, values, leadership, engineering capabilities and a supportive team culture.",
     path: "/about",
   });
 }

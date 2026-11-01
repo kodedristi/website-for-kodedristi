@@ -1,52 +1,66 @@
 import type { MetadataRoute } from "next";
 import { listContent } from "@/lib/content/store";
-import type { ArticleData } from "@/lib/content/schemas";
-import { SITE_URL as BASE } from "@/lib/content/seo";
+import { SEO_PAGES, type PageSeoData } from "@/lib/content/schemas";
+import { SITE_URL as BASE, absoluteUrl } from "@/lib/content/seo";
+
+/** Content types that own a `/<segment>/<slug>` page. */
+const DETAIL_ROUTES: { type: string; segment: string }[] = [
+  { type: "project", segment: "projects" },
+  { type: "article", segment: "insights" },
+  { type: "solution", segment: "solutions" },
+  { type: "product", segment: "products" },
+  { type: "course", segment: "learn" },
+  { type: "gallery", segment: "gallery" },
+];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
-
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: BASE, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${BASE}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/careers`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${BASE}/team`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/products`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/solutions`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/insights`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/hackathon`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE}/dristi-lagani`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE}/projects`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/partners`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${BASE}/learn`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-  ];
-
-  let dynamicPages: MetadataRoute.Sitemap = [];
+  // Pages the admin has ticked "hide from search engines" on must not be
+  // advertised here - a sitemap entry for a noindex page is a contradiction
+  // Search Console reports as an error.
+  const hidden = new Set<string>();
   try {
-    const projects = await listContent<{ name: string }>("project");
-    dynamicPages = projects
-      .filter((p) => p.slug)
-      .map((p) => ({
-        url: `${BASE}/projects/${p.slug}`,
-        lastModified: p.updatedAt ? new Date(p.updatedAt) : now,
-        changeFrequency: "monthly" as const,
-        priority: 0.6,
-      }));
-    const articles = await listContent<ArticleData>("article");
-    dynamicPages = dynamicPages.concat(
-      articles
-      .filter((a) => a.slug)
-      .map((a) => ({
-        url: `${BASE}/insights/${a.slug}`,
-        lastModified: a.updatedAt ? new Date(a.updatedAt) : now,
-        changeFrequency: "weekly" as const,
-        priority: 0.7,
-      }))
-    );
+    const rows = await listContent<PageSeoData>("page-seo");
+    for (const row of rows) {
+      if (row.data.noIndex && row.data.path) hidden.add(row.data.path);
+    }
   } catch {
-    // DB down — return static pages only
+    // DB down - fall through with nothing hidden.
   }
 
-  return [...staticPages, ...dynamicPages];
+  // Static pages come from the same list the admin's SEO screen uses, so a
+  // new page added there appears here without a second edit. No
+  // `lastModified`: these are not tracked per page, and stamping every URL
+  // "now" teaches crawlers to ignore the field.
+  const staticPages: MetadataRoute.Sitemap = SEO_PAGES.filter((p) => !hidden.has(p.path)).map(
+    (p) => ({
+      url: p.path === "/" ? BASE : `${BASE}${p.path}`,
+    })
+  );
+
+  // One failing content type must not drop the others.
+  const detailGroups = await Promise.all(
+    DETAIL_ROUTES.map(async ({ type, segment }): Promise<MetadataRoute.Sitemap> => {
+      try {
+        const items = await listContent(type);
+        return items
+          .filter((item) => item.slug)
+          .map((item) => {
+            // Items keep their artwork under `image` (or `coverImage` for
+            // galleries); listing it lets Google Images find it.
+            const data = item.data as { image?: string; coverImage?: string };
+            const image = (data.image || data.coverImage)?.trim();
+            return {
+              url: `${BASE}/${segment}/${item.slug}`,
+              lastModified: item.updatedAt ? new Date(item.updatedAt) : undefined,
+              ...(image ? { images: [absoluteUrl(image)] } : {}),
+            };
+          });
+      } catch {
+        // DB down - this type contributes nothing.
+        return [];
+      }
+    })
+  );
+
+  return [...staticPages, ...detailGroups.flat()];
 }

@@ -7,6 +7,8 @@ import { GraduationScrollIcon, DashboardSquare01Icon, Mail01Icon, Calendar02Icon
 
 export const metadata = {
   title: "My Profile",
+  // A per-user page behind a Google sign-in: nothing here belongs in search.
+  robots: { index: false, follow: false },
 };
 
 export const dynamic = "force-dynamic";

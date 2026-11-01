@@ -22,9 +22,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("partners", {
-    title: "Partners",
+    title: "Technology & Outsourcing Partners",
     description:
-      "KodeDristi's institutional and academic partners, and how to become a partner.",
+      "Kodedristi's institutional, academic and technology partners, and how agencies and companies can partner with us for software outsourcing.",
     path: "/partners",
   });
 }

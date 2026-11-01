@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buildPageMetadata, SITE_URL } from "@/lib/content/seo";
+import { buildPageMetadata } from "@/lib/content/seo";
 import { PageHero } from "@/components/ui/page-hero";
 import {
   ShowcaseCard,
@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/showcase-card";
 import { RevealGroup, RevealItem } from "@/components/motion/reveal";
 import { getArticles, getPageHero } from "@/lib/content/resolvers";
-import { ArticleJsonLd, OrganizationJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -21,9 +20,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("insights", {
-    title: "News & Insights",
+    title: "Software & AI Insights from Nepal",
     description:
-      "Articles on AI software development in Nepal, custom software, cloud migration and more from the KodeDristi engineering team.",
+      "Articles on software development in Nepal, AI, custom software, SaaS, outsourcing and cloud migration from the Kodedristi engineering team.",
     path: "/insights",
   });
 }
@@ -38,17 +37,6 @@ export default async function InsightsPage() {
 
   return (
     <>
-      <OrganizationJsonLd />
-      {articles.map((article) => (
-        <ArticleJsonLd
-          key={article.slug}
-          title={article.title}
-          description={article.excerpt}
-          author="KodeDristi Team"
-          datePublished={article.date}
-          url={`${SITE_URL}/insights/${article.slug}`}
-        />
-      ))}
       <PageHero eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
 
       <section className="section">

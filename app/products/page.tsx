@@ -30,9 +30,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("products", {
-    title: "Products",
+    title: "SaaS Products — Billing, Accounting & LMS Software",
     description:
-      "Billing Software, Accounting Software and LMS — in-house products built and maintained by KodeDristi.",
+      "Billing software, accounting software and LMS built in Nepal by Kodedristi: SaaS products for Nepali businesses and institutions.",
     path: "/products",
   });
 }

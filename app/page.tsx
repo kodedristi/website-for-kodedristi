@@ -11,9 +11,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("home", {
-    title: "KodeDristi Software — Software Delivery, AI & Courses",
+    title: "Premium Software Company in Nepal — Kodedristi Software",
     description:
-      "KodeDristi Software Pvt. Ltd. builds web & mobile apps, SaaS products, AI automation and custom software, and runs applied IT courses — #WithYouEveryStep.",
+      "Kodedristi is a premium software company in Kathmandu, Nepal: custom software, web & mobile apps, SaaS, AI, software outsourcing and white-label development.",
     path: "/",
     absoluteTitle: true,
   });

@@ -17,9 +17,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("projects", {
-    title: "Projects",
+    title: "Software Projects & Case Studies",
     description:
-      "Software KodeDristi has designed, built and shipped — each project told from the business problem through to the result.",
+      "Web, mobile, SaaS and AI projects designed and shipped by Kodedristi, each told from the business problem through to the result.",
     path: "/projects",
   });
 }
