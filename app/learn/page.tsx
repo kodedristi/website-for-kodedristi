@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buildPageMetadata, SITE_URL } from "@/lib/content/seo";
+import { buildPageMetadata } from "@/lib/content/seo";
 import { ArrowRight, Clock, Signal } from "lucide-react";
 import { PageHero } from "@/components/ui/page-hero";
 import { Container } from "@/components/ui/container";
@@ -18,7 +18,7 @@ import { getCourses } from "@/lib/content/resolvers";
 import { getFaqs } from "@/lib/content/resolvers";
 import { getPageHero } from "@/lib/content/resolvers";
 import { getProcessSteps } from "@/lib/content/resolvers";
-import { CourseJsonLd, FAQJsonLd } from "@/components/seo/json-ld";
+import { FAQJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -30,9 +30,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("learn", {
-    title: "Learn — IT Courses",
+    title: "IT Courses in Kathmandu, Nepal",
     description:
-      "Live, cohort-based IT courses from KodeDristi — AI & ML, full-stack web development, cloud & DevOps, mobile, data analytics and UI/UX.",
+      "Live, practical IT courses in Nepal from Kodedristi: AI & machine learning, full-stack web development, Python, cloud & DevOps, mobile and UI/UX.",
     path: "/learn",
   });
 }
@@ -47,15 +47,6 @@ export default async function LearnPage() {
 
   return (
     <>
-      {courses.map((course) => (
-        <CourseJsonLd
-          key={course.slug}
-          name={course.name}
-          description={course.summary}
-          url={`${SITE_URL}/learn/${course.slug}`}
-          level={course.level}
-        />
-      ))}
       {faqs.length > 0 && (
         <FAQJsonLd
           items={faqs.map((f) => ({ question: f.q, answer: f.a }))}

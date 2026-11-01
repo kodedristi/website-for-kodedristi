@@ -18,9 +18,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("careers", {
-    title: "Careers",
+    title: "Software Jobs & Careers in Kathmandu, Nepal",
     description:
-      "Open roles at KodeDristi and how we hire.",
+      "Join Kodedristi, a software company in Kathmandu. Explore developer, design and AI roles with real projects, a supportive team and room to grow.",
     path: "/careers",
   });
 }

@@ -101,8 +101,22 @@ export async function SectionRenderer() {
     getHomeHeroSlides(),
   ]);
 
+  /* The hero carries the page's only <h1>. When it is unpublished in the
+     admin the homepage would go out with no <h1> at all, which search
+     engines read as "this page is about nothing". A visually hidden one
+     keeps the topic stated without touching the design; it steps aside the
+     moment the hero is back. */
+  const hasHero = sections.some((s) => s.enabled && s.type === "hero");
+
   return (
     <>
+      {!hasHero && (
+        <h1 className="sr-only">
+          Kodedristi Software: premium software company in Nepal for custom software, web and
+          mobile apps, SaaS products, AI automation, software outsourcing and white-label
+          development
+        </h1>
+      )}
       {sections
         .filter((s) => s.enabled)
         .map((section) => {

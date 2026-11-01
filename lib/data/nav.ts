@@ -37,6 +37,7 @@ export const navGroups: NavGroup[] = [
     href: "/about",
     items: [
       { label: "About", href: "/about", description: "Mission, values and how we work." },
+      { label: "Outsourcing", href: "/outsourcing", description: "Dedicated teams and white-label development." },
       { label: "Team", href: "/team", description: "The people behind KodeDristi." },
       { label: "Careers", href: "/careers", description: "Open roles and how we hire." },
       { label: "News / Insights", href: "/insights", description: "Updates, articles and case notes." },

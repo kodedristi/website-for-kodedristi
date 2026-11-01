@@ -18,9 +18,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("team", {
-    title: "Team",
+    title: "Our Software Development Team in Nepal",
     description:
-      "The people behind KodeDristi's client work and course programs.",
+      "Meet the engineers, designers and AI specialists at Kodedristi, the software team behind our client projects, outsourcing partnerships and courses.",
     path: "/team",
   });
 }

@@ -49,7 +49,7 @@ export function ShowcaseCard({
   secondary,
   tone = "light",
   image,
-  imageAlt = "",
+  imageAlt,
   imageFit = "cover",
   className,
 }: {
@@ -158,7 +158,7 @@ export function ShowcaseCard({
         {image ? (
           <Image
             src={image}
-            alt={imageAlt}
+            alt={imageAlt ?? title}
             fill
             sizes="(min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
             className={cn(

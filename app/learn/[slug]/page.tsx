@@ -16,6 +16,8 @@ import { PageHero } from "@/components/ui/page-hero";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getCourse, getCourses } from "@/lib/content/resolvers";
+import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
+import { BreadcrumbJsonLd, CourseJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -32,7 +34,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const course = await getCourse(slug);
   if (!course) return {};
-  return { title: course.name, description: course.summary };
+  return buildDetailMetadata({
+    title: course.name,
+    description: course.summary,
+    path: `/learn/${course.slug}`,
+    image: course.image,
+  });
 }
 
 const FIELD_ICONS = {
@@ -69,6 +76,19 @@ export default async function CourseDetailPage({
 
   return (
     <>
+      <CourseJsonLd
+        name={course.name}
+        description={course.summary}
+        url={`${SITE_URL}/learn/${course.slug}`}
+        level={course.level}
+        image={course.image}
+      />
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Learn", path: "/learn" },
+          { name: course.name, path: `/learn/${course.slug}` },
+        ]}
+      />
       <PageHero eyebrow="Learn" eyebrowTone="green" title={course.name} description={course.summary}>
         <div className="flex flex-wrap items-center gap-3">
           <Button href="/contact" size="lg" variant="secondary">

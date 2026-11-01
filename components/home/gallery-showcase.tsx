@@ -98,7 +98,7 @@ function GalleryCard({
         {gallery.coverImage ? (
           <Image
             src={gallery.coverImage}
-            alt=""
+            alt={`${gallery.name} photo gallery`}
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="object-cover object-center transition-transform duration-700 ease-out-expo group-hover/gal:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/gal:scale-100"

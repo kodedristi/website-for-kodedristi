@@ -1,95 +1,35 @@
-import Script from "next/script";
 import { getSiteSettings } from "@/lib/content/resolvers";
-import { SITE_URL } from "@/lib/content/seo";
+import { SITE_URL, absoluteUrl, toIsoDate } from "@/lib/content/seo";
 
 /** The brand mark, absolute. Used for the Schema.org logo/image fields and
  *  as the share-card fallback where a page has no image of its own. */
 const LOGO_URL = `${SITE_URL}/images/logo.png`;
 
-type OrganizationLD = {
-  type: "Organization";
-  name: string;
-  url: string;
-  logo?: string;
-  description?: string;
-  address?: {
-    streetAddress: string;
-    addressLocality: string;
-    addressCountry: string;
-  };
-  contactPoint?: {
-    telephone: string;
-    contactType: string;
-  };
-  sameAs?: string[];
-};
+const ORG_NAME = "KodeDristi Software";
 
-type CourseLD = {
-  type: "Course";
-  name: string;
-  description: string;
-  provider: { name: string; sameAs: string };
-  url: string;
-  educationalLevel?: string;
-  isAccessibleForFree?: boolean;
-};
+/** We serve clients from anywhere, so the service area is the world rather
+ *  than a list of countries - a list would read as a limit. */
+const SERVICE_AREA = [{ "@type": "Place", name: "Worldwide" }];
 
-type ArticleLD = {
-  type: "Article";
-  headline: string;
-  description: string;
-  author: { name: string; url?: string };
-  publisher: { name: string; logo: { url: string } };
-  datePublished: string;
-  dateModified?: string;
-  image?: string;
-  url: string;
-};
+type JsonLdNode = { "@type": string | string[]; [key: string]: unknown };
 
-type FAQPageLD = {
-  type: "FAQPage";
-  mainEntity: {
-    type: "Question";
-    name: string;
-    acceptedAnswer: {
-      type: "Answer";
-      text: string;
-    };
-  }[];
-};
-
-type BreadcrumbLD = {
-  type: "BreadcrumbList";
-  itemListElement: {
-    position: number;
-    name: string;
-    item: string;
-  }[];
-};
-
-type WebSiteLD = {
-  type: "WebSite";
-  name: string;
-  url: string;
-  potentialAction?: {
-    type: "SearchAction";
-    target: string;
-    "query-input": string;
-  };
-};
-
-type Schema = OrganizationLD | CourseLD | ArticleLD | FAQPageLD | BreadcrumbLD | WebSiteLD;
-
-export function JsonLd({ schema }: { schema: Schema | Schema[] }) {
-  return (
-    <Script
-      id="json-ld"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(Array.isArray(schema) ? schema : [schema]),
-      }}
-    />
-  );
+/**
+ * Renders one or more schema.org nodes as a single JSON-LD block.
+ *
+ * Search engines only read the block when it carries `@context` and `@type`;
+ * without them it is ignored as unstructured text, so they are added here
+ * rather than left to every caller to remember. A plain `<script>` is used
+ * instead of `next/script` (which is for executable code, and dedupes by
+ * `id` - several blocks sharing one id would collapse into the first).
+ * `<` is escaped so CMS text containing `</script>` cannot break out of the
+ * tag.
+ */
+export function JsonLd({ schema }: { schema: JsonLdNode | JsonLdNode[] }) {
+  const nodes = Array.isArray(schema) ? schema : [schema];
+  const json = JSON.stringify(
+    nodes.map((node) => ({ "@context": "https://schema.org", ...node }))
+  ).replace(/</g, "\\u003c");
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
 }
 
 /**
@@ -105,18 +45,37 @@ export async function OrganizationJsonLd() {
   return (
     <JsonLd
       schema={{
-        type: "Organization",
+        "@type": ["Organization", "ProfessionalService"],
+        "@id": `${SITE_URL}/#organization`,
         name: settings.companyName,
+        alternateName: ["Kodedristi", "KodeDristi Software Pvt. Ltd."],
         url: SITE_URL,
         logo: LOGO_URL,
+        image: LOGO_URL,
         description:
-          "Software delivery, AI automation, and applied IT courses in Kathmandu, Nepal.",
+          "Software company in Kathmandu, Nepal: custom software, web and mobile apps, SaaS, AI automation, software outsourcing, white-label development and applied IT courses.",
+        areaServed: SERVICE_AREA,
+        availableLanguage: ["English", "Nepali"],
+        knowsAbout: [
+          "Custom software development",
+          "Web application development",
+          "Mobile app development",
+          "SaaS product development",
+          "Artificial intelligence and automation",
+          "Software outsourcing",
+          "White-label software development",
+          "UI/UX design",
+          "Cloud and DevOps",
+          "IT training",
+        ],
         address: {
+          "@type": "PostalAddress",
           streetAddress: settings.address,
           addressLocality: "Kathmandu",
           addressCountry: "NP",
         },
         contactPoint: {
+          "@type": "ContactPoint",
           // `tel:+9779851362001` -> `+9779851362001`. The stored href is
           // what a phone dials, which is the same digits schema.org wants.
           telephone: settings.phoneHref.replace(/^tel:/, "") || settings.phone,
@@ -133,23 +92,27 @@ export function CourseJsonLd({
   description,
   url,
   level,
+  image,
 }: {
   name: string;
   description: string;
   url: string;
   level?: string;
+  image?: string;
 }) {
   return (
     <JsonLd
       schema={{
-        type: "Course",
+        "@type": "Course",
         name,
         description,
         provider: {
-          name: "KodeDristi Software",
+          "@type": "Organization",
+          name: ORG_NAME,
           sameAs: SITE_URL,
         },
         url,
+        ...(image ? { image: absoluteUrl(image) } : {}),
         educationalLevel: level || "Intermediate",
         isAccessibleForFree: false,
       }}
@@ -174,20 +137,26 @@ export function ArticleJsonLd({
   image?: string;
   url: string;
 }) {
+  // Dates are free text in the CMS; leave the field out rather than emit
+  // something a validator rejects.
+  const published = toIsoDate(datePublished);
+  const modified = toIsoDate(dateModified) ?? published;
   return (
     <JsonLd
       schema={{
-        type: "Article",
+        "@type": "Article",
         headline: title,
         description,
-        author: { name: author },
+        author: { "@type": "Organization", name: author, url: SITE_URL },
         publisher: {
-          name: "KodeDristi Software",
-          logo: { url: LOGO_URL },
+          "@type": "Organization",
+          name: ORG_NAME,
+          logo: { "@type": "ImageObject", url: LOGO_URL },
         },
-        datePublished,
-        dateModified: dateModified || datePublished,
-        image: image || LOGO_URL,
+        ...(published ? { datePublished: published } : {}),
+        ...(modified ? { dateModified: modified } : {}),
+        image: image ? absoluteUrl(image) : LOGO_URL,
+        mainEntityOfPage: { "@type": "WebPage", "@id": url },
         url,
       }}
     />
@@ -202,15 +171,62 @@ export function FAQJsonLd({
   return (
     <JsonLd
       schema={{
-        type: "FAQPage",
+        "@type": "FAQPage",
         mainEntity: items.map((item) => ({
-          type: "Question" as const,
+          "@type": "Question",
           name: item.question,
           acceptedAnswer: {
-            type: "Answer" as const,
+            "@type": "Answer",
             text: item.answer,
           },
         })),
+      }}
+    />
+  );
+}
+
+/**
+ * `trail` runs from just below the homepage down to the current page, which
+ * is its last entry; "Home" is prepended here.
+ */
+export function BreadcrumbJsonLd({ trail }: { trail: { name: string; path: string }[] }) {
+  const crumbs = [{ name: "Home", path: "/" }, ...trail];
+  return (
+    <JsonLd
+      schema={{
+        "@type": "BreadcrumbList",
+        itemListElement: crumbs.map((crumb, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: crumb.name,
+          item: absoluteUrl(crumb.path),
+        })),
+      }}
+    />
+  );
+}
+
+export function ServiceJsonLd({
+  name,
+  description,
+  url,
+  serviceType,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  serviceType: string;
+}) {
+  return (
+    <JsonLd
+      schema={{
+        "@type": "Service",
+        name,
+        description,
+        url,
+        serviceType,
+        provider: { "@id": `${SITE_URL}/#organization` },
+        areaServed: SERVICE_AREA,
       }}
     />
   );
@@ -220,14 +236,11 @@ export function WebSiteJsonLd() {
   return (
     <JsonLd
       schema={{
-        type: "WebSite",
-        name: "KodeDristi Software",
+        "@type": "WebSite",
+        "@id": `${SITE_URL}/#website`,
+        name: ORG_NAME,
         url: SITE_URL,
-        potentialAction: {
-          type: "SearchAction",
-          target: `${SITE_URL}/insights?q={search_term_string}`,
-          "query-input": "required name=search_term_string",
-        },
+        publisher: { "@id": `${SITE_URL}/#organization` },
       }}
     />
   );

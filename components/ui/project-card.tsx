@@ -47,7 +47,7 @@ export function ProjectCard({ project }: { project: ProjectCardData }) {
         {project.image ? (
           <Image
             src={project.image}
-            alt=""
+            alt={`${project.name} project by Kodedristi`}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-contain object-center p-2 transition-transform duration-700 ease-out-expo group-hover/proj:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover/proj:scale-100"

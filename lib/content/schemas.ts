@@ -1558,6 +1558,7 @@ export const SEO_PAGES: { slug: string; pageName: string; path: string }[] = [
   { slug: "solutions", pageName: "Solutions", path: "/solutions" },
   { slug: "products", pageName: "Products", path: "/products" },
   { slug: "projects", pageName: "Projects", path: "/projects" },
+  { slug: "outsourcing", pageName: "Outsourcing & White Label", path: "/outsourcing" },
   { slug: "learn", pageName: "Learn", path: "/learn" },
   { slug: "insights", pageName: "Insights", path: "/insights" },
   { slug: "partners", pageName: "Partners", path: "/partners" },

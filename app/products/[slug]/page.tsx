@@ -6,6 +6,8 @@ import { PageHero } from "@/components/ui/page-hero";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getProduct, getProducts } from "@/lib/content/resolvers";
+import { buildDetailMetadata } from "@/lib/content/seo";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -22,7 +24,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return {};
-  return { title: product.name, description: product.tagline };
+  return buildDetailMetadata({
+    title: product.name,
+    description: product.tagline,
+    path: `/products/${product.slug}`,
+    image: product.image,
+  });
 }
 
 export default async function ProductDetailPage({
@@ -41,6 +48,12 @@ export default async function ProductDetailPage({
 
   return (
     <>
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Products", path: "/products" },
+          { name: product.name, path: `/products/${product.slug}` },
+        ]}
+      />
       <PageHero eyebrow="Products" eyebrowTone={product.accent} title={product.name} description={product.tagline}>
         <Button href="/contact" size="lg">
           Talk to Us About {product.name} <ArrowRight className="h-4 w-4" />

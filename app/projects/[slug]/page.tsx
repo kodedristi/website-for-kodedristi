@@ -7,6 +7,8 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/ui/project-card";
 import { getProject, getProjects } from "@/lib/content/resolvers";
+import { buildDetailMetadata } from "@/lib/content/seo";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -23,7 +25,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const project = await getProject(slug);
   if (!project) return {};
-  return { title: project.name, description: project.tagline };
+  return buildDetailMetadata({
+    title: project.name,
+    description: project.tagline,
+    path: `/projects/${project.slug}`,
+    image: project.image,
+  });
 }
 
 export default async function ProjectCaseStudyPage({
@@ -59,6 +66,12 @@ export default async function ProjectCaseStudyPage({
 
   return (
     <>
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Projects", path: "/projects" },
+          { name: project.name, path: `/projects/${project.slug}` },
+        ]}
+      />
       <PageHero eyebrow={meta.join("  ·  ") || "Case study"} title={project.name} description={project.tagline}>
         {project.url?.trim() && (
           <Button href={project.url} variant="outline" size="lg">

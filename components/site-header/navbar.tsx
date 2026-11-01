@@ -159,7 +159,7 @@ export function Navbar({ navGroups }: { navGroups: NavGroup[] }) {
             <span className="relative block h-7 w-[62px]">
               <Image
                 src="/images/logo.png"
-                alt=""
+                alt="Kodedristi Software logo"
                 fill
                 priority
                 className="object-contain"

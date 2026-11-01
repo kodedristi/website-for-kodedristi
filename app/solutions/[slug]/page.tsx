@@ -7,6 +7,8 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getSolution, getSolutions } from "@/lib/content/resolvers";
+import { buildDetailMetadata } from "@/lib/content/seo";
+import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 export const revalidate = 3600;
 
@@ -23,10 +25,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const solution = await getSolution(slug);
   if (!solution) return {};
-  return {
+  return buildDetailMetadata({
     title: solution.name,
     description: solution.tagline,
-  };
+    path: `/solutions/${solution.slug}`,
+    image: solution.image,
+  });
 }
 
 export default async function SolutionDetailPage({
@@ -45,6 +49,12 @@ export default async function SolutionDetailPage({
 
   return (
     <>
+      <BreadcrumbJsonLd
+        trail={[
+          { name: "Solutions", path: "/solutions" },
+          { name: solution.name, path: `/solutions/${solution.slug}` },
+        ]}
+      />
       <PageHero eyebrow="Solutions" eyebrowTone={solution.accent} title={solution.name} description={solution.tagline}>
         <div className="flex flex-wrap items-center gap-3">
           <Button href="/contact" size="lg">

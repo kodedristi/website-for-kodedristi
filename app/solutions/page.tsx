@@ -21,9 +21,9 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("solutions", {
-    title: "Solutions",
+    title: "Software Development Services in Nepal",
     description:
-      "Web & mobile apps, SaaS products, AI & automation, custom software, cloud and DevOps, domain & hosting, design and marketing — KodeDristi's full service catalogue.",
+      "Custom software, web & mobile app development, SaaS, AI & automation, cloud and DevOps, UI/UX design and digital marketing from Kodedristi in Kathmandu.",
     path: "/solutions",
   });
 }
