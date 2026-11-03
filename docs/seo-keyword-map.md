@@ -90,3 +90,4 @@ TechBehemoths, SoftwareSuggest. The community-maintained
 list on GitHub accepts pull requests. Also pursue the partners and universities already on the
 site (ask for a link from their project or partner page), and publish the hackathon results as
 press releases. No paid links, networks or bulk directories.
+ok
