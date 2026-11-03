@@ -65,6 +65,40 @@ export async function createSubmission(
   ]);
 }
 
+/**
+ * How many submissions a source (identified by its hashed address, kept in the
+ * row's `_ipHash`) has sent inside a window. The database is shared by every
+ * server instance, so unlike an in-memory counter this limit holds on
+ * serverless hosting.
+ */
+export async function countRecentSubmissionsFrom(ipHash: string, minutes: number): Promise<number> {
+  await ensureSchema();
+  const res = await db.query<{ count: number }>(
+    `SELECT count(*)::int AS count FROM contact_submissions
+     WHERE data->>'_ipHash' = $1 AND created_at > now() - ($2 || ' minutes')::interval`,
+    [ipHash, String(minutes)]
+  );
+  return res.rows[0]?.count ?? 0;
+}
+
+/** True when this email already sent the same kind of enquiry moments ago -
+ *  a double-click or a retry, which should not create a second row. */
+export async function hasRecentDuplicate(
+  section: string,
+  email: string,
+  seconds: number
+): Promise<boolean> {
+  await ensureSchema();
+  const res = await db.query(
+    `SELECT 1 FROM contact_submissions
+     WHERE section = $1 AND data->>'email' = $2
+       AND created_at > now() - ($3 || ' seconds')::interval
+     LIMIT 1`,
+    [section, email, String(seconds)]
+  );
+  return res.rows.length > 0;
+}
+
 export async function upsertEnrollment(input: {
   email: string;
   courseSlug?: string;

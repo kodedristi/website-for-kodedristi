@@ -3,12 +3,16 @@
 import { useState, type FormEvent } from "react";
 import { CheckmarkCircle02Icon, Loading01Icon, SentIcon } from "hugeicons-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { products } from "@/lib/data/products";
-
-const fieldClasses =
-  "focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-brand-blue";
-const labelClasses = "text-sm font-medium text-text-secondary";
+import {
+  ContactDetailsFields,
+  Field,
+  Honeypot,
+  checkContactDetails,
+  fieldClasses,
+  postSubmission,
+  type FieldErrors,
+} from "@/components/contact/contact-fields";
 
 const INTERESTS = ["Live demo", "Pricing & licensing", "White-label / partnership", "Custom build like this"];
 
@@ -16,34 +20,47 @@ export function ProductTalkForm({ defaultProduct }: { defaultProduct?: string })
   const [product, setProduct] = useState(defaultProduct ?? "");
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus("submitting");
     setError(false);
-    const data = new FormData(e.currentTarget);
+    setErrorMessage(null);
+    const form = e.currentTarget;
+    const data = new FormData(form);
     const value = (key: string) => data.get(key)?.toString() ?? "";
+
+    // Same rules the server applies; this only spares the visitor a round trip.
+    const problems = checkContactDetails({ name: value("name"), email: value("email"), phone: value("phone") });
+    setFieldErrors(problems);
+    if (Object.keys(problems).length > 0) {
+      setStatus("idle");
+      form.querySelector<HTMLElement>(`[name="${Object.keys(problems)[0]}"]`)?.focus();
+      return;
+    }
+
     const payload: Record<string, unknown> = {
       section: "product_talk",
       name: value("name"),
-      contact: value("contact"),
+      email: value("email"),
+      phone: value("phone"),
       organization: value("organization"),
+      website: value("website"),
       product: value("product"),
       interest: value("interest"),
       message: value("message"),
     };
-    try {
-      const res = await fetch("/api/contact/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("submit failed");
+    const result = await postSubmission(payload);
+    if (result.ok) {
       setStatus("submitted");
-    } catch {
-      setStatus("idle");
-      setError(true);
+      return;
     }
+    setStatus("idle");
+    setError(true);
+    setErrorMessage(result.message);
+    if (result.fields) setFieldErrors(result.fields);
   }
 
   if (status === "submitted") {
@@ -64,17 +81,10 @@ export function ProductTalkForm({ defaultProduct }: { defaultProduct?: string })
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 card p-6 sm:p-8">
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full name" htmlFor="pt-name">
-          <input id="pt-name" name="name" required className={fieldClasses} placeholder="Your full name" />
-        </Field>
-        <Field label="Work email or phone" htmlFor="pt-contact">
-          <input id="pt-contact" name="contact" required className={fieldClasses} placeholder="you@company.com" />
-        </Field>
-        <Field label="Organization" htmlFor="pt-org">
-          <input id="pt-org" name="organization" className={fieldClasses} placeholder="Company / institution" />
-        </Field>
-        <Field label="Product" htmlFor="pt-product">
+      <div className="relative grid gap-5 sm:grid-cols-2">
+        <Honeypot />
+        <ContactDetailsFields idPrefix="pt-" errors={fieldErrors} />
+        <Field label="Product" htmlFor="pt-product" required error={fieldErrors.product}>
           <select
             id="pt-product"
             name="product"
@@ -105,7 +115,7 @@ export function ProductTalkForm({ defaultProduct }: { defaultProduct?: string })
             ))}
           </select>
         </Field>
-        <Field label="Anything else?" htmlFor="pt-message" full>
+        <Field label="Anything else?" htmlFor="pt-message" full error={fieldErrors.message}>
           <textarea
             id="pt-message"
             name="message"
@@ -118,7 +128,7 @@ export function ProductTalkForm({ defaultProduct }: { defaultProduct?: string })
 
       {error && (
         <p className="rounded-xl border-[0.5px] border-brand-blue/30 bg-brand-blue/5 px-4 py-3 text-sm text-text-primary">
-          Something went wrong booking your call. Please try again.
+          {errorMessage ?? "Something went wrong booking your call. Please try again."}
         </p>
       )}
       <Button type="submit" size="lg" disabled={status === "submitting"} className="w-fit">
@@ -133,26 +143,5 @@ export function ProductTalkForm({ defaultProduct }: { defaultProduct?: string })
         )}
       </Button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  htmlFor,
-  children,
-  full,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-  full?: boolean;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-1.5", full && "sm:col-span-2")}>
-      <label htmlFor={htmlFor} className={labelClasses}>
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }
