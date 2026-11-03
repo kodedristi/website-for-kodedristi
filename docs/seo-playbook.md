@@ -7,8 +7,12 @@ not from any single change.
 ## 0. Do first
 
 - [ ] Admin → SEO → Homepage: untick **Hide from search engines** (the homepage is currently noindex).
-- [ ] Set `NEXT_PUBLIC_SITE_URL=https://kodedristi.com` in the production environment.
-- [ ] Verify the domain in Google Search Console and submit `https://kodedristi.com/sitemap.xml`.
+- [ ] Set `NEXT_PUBLIC_SITE_URL=https://www.kodedristi.com` in the production environment (or leave
+      it unset: the code default is the www host). kodedristi.com redirects to www, so a canonical
+      on the bare domain points Google at a URL that redirects away from itself.
+- [ ] Verify the domain in Google Search Console and submit `https://www.kodedristi.com/sitemap.xml`.
+- [ ] Admin → SEO: check the **Homepage** row. Any title or description typed there overrides the
+      one in code, so make it match `docs/seo-keyword-map.md` (section 3).
 - [ ] Import the property into Bing Webmaster Tools.
 - [ ] Use URL Inspection → Request indexing on `/`, `/outsourcing`, `/solutions`, `/about`, `/contact`.
 

@@ -1570,6 +1570,8 @@ export const SEO_PAGES: { slug: string; pageName: string; path: string }[] = [
   { slug: "products", pageName: "Products", path: "/products" },
   { slug: "projects", pageName: "Projects", path: "/projects" },
   { slug: "outsourcing", pageName: "Outsourcing & White Label", path: "/outsourcing" },
+  { slug: "erp-software-nepal", pageName: "ERP Software", path: "/erp-software-nepal" },
+  { slug: "digital-transformation-nepal", pageName: "Digital Transformation", path: "/digital-transformation-nepal" },
   { slug: "industries", pageName: "Industries", path: "/industries" },
   { slug: "learn", pageName: "Learn", path: "/learn" },
   { slug: "insights", pageName: "Insights", path: "/insights" },

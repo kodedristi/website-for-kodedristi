@@ -58,6 +58,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: "All Projects", href: "/projects", description: "Case studies from problem to business result." },
       { label: "Industries", href: "/industries", description: "Software for fintech, healthcare, education and more." },
+      { label: "Digital Transformation", href: "/digital-transformation-nepal", description: "Replace manual processes with software." },
       { label: "Solutions", href: "/solutions", description: "The delivery tracks behind the work." },
     ],
   },
@@ -68,6 +69,7 @@ export const navGroups: NavGroup[] = [
       { label: "Billing Software", href: "/products/billing-software", description: "Invoicing and billing, simplified." },
       { label: "Accounting Software", href: "/products/accounting-software", description: "Books, reconciled and always current." },
       { label: "LMS", href: "/products/lms", description: "Learning management for institutions." },
+      { label: "ERP Software", href: "/erp-software-nepal", description: "Custom ERP built around your business." },
     ],
   },
 ];

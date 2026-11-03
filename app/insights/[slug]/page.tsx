@@ -9,6 +9,7 @@ import { getArticle, getArticles } from "@/lib/content/resolvers";
 import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { findAuthor } from "@/lib/content/authors";
+import { ArticleBody } from "@/components/seo/article-body";
 
 export const revalidate = 3600;
 
@@ -99,11 +100,7 @@ export default async function ArticleDetailPage({
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Insights
             </Link>
-            {article.body.map((paragraph, i) => (
-              <p key={i} className="text-base leading-relaxed text-text-secondary">
-                {paragraph}
-              </p>
-            ))}
+            <ArticleBody body={article.body} />
           </article>
 
           <aside className="flex flex-col gap-6">

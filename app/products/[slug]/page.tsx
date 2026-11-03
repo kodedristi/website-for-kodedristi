@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getProduct, getProducts } from "@/lib/content/resolvers";
 import { buildDetailMetadata } from "@/lib/content/seo";
+import { PRODUCT_SEO } from "@/lib/data/product-seo";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { QuickAnswer } from "@/components/seo/quick-answer";
 import { AnswerFaq } from "@/components/seo/answer-faq";
@@ -27,9 +28,10 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await getProduct(slug);
   if (!product) return {};
+  const seo = PRODUCT_SEO[product.slug];
   return buildDetailMetadata({
-    title: product.name,
-    description: product.tagline,
+    title: seo?.title ?? product.name,
+    description: seo?.description ?? product.tagline,
     path: `/products/${product.slug}`,
     image: product.image,
   });

@@ -6,7 +6,13 @@ import { getPageSeo } from "@/lib/content/resolvers";
  * sitemap, robots, JSON-LD. One constant so a domain change is one edit.
  * Override per environment with NEXT_PUBLIC_SITE_URL (no trailing slash).
  */
-const DEFAULT_SITE_URL = "https://kodedristi.com";
+/**
+ * The host the site is actually served from. kodedristi.com redirects to
+ * www.kodedristi.com, so www is the real address: a canonical, sitemap or
+ * schema URL on the bare domain points Google at a URL that redirects away
+ * from itself, and the homepage then never gets indexed.
+ */
+const DEFAULT_SITE_URL = "https://www.kodedristi.com";
 
 function resolveSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
