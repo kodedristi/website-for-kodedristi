@@ -129,6 +129,8 @@ export type ArticleData = {
   category: string;
   date: string;
   readTime: string;
+  /** A team member's name, exactly as on the Team page. Links the article to their profile. */
+  author?: string;
   body: string[];
 };
 
@@ -212,6 +214,11 @@ export type ProjectData = {
   keyFeatures: string[];
   techStack: string[];
   businessResult: string;
+  /** Headline figures, one per line as "value | what it measures". */
+  metrics?: string[];
+  /** A sentence from the client, with their permission. */
+  quote?: string;
+  quoteAuthor?: string;
 };
 /**
  * One signed industry-academia agreement.
@@ -819,6 +826,7 @@ export const CONTENT_SCHEMAS: ContentSchema[] = [
       { key: "category", label: "Category", kind: "text" },
       { key: "date", label: "Date (YYYY-MM-DD)", kind: "text" },
       { key: "readTime", label: "Read time", kind: "text" },
+      { key: "author", label: "Author (optional)", kind: "text", helper: "A team member's name exactly as it appears on the Team page. Gives the article a named author with a profile page; leave empty to credit the company." },
       { key: "body", label: "Body (one paragraph per line)", kind: "list" },
     ],
     fallback: serializeArticles,
@@ -1068,6 +1076,9 @@ export const CONTENT_SCHEMAS: ContentSchema[] = [
       { key: "keyFeatures", label: "4. Key features", kind: "list", helper: "One per line." },
       { key: "techStack", label: "5. Technology stack", kind: "list", helper: "One per line." },
       { key: "businessResult", label: "6. Business result", kind: "textarea", helper: "What changed for the client. Use real figures only — an invented metric is a false claim about someone else's business." },
+      { key: "metrics", label: "Headline results (optional)", kind: "list", helper: "One per line as: value | what it measures. Example: 40% | faster order processing. Real, client-approved figures only." },
+      { key: "quote", label: "Client quote (optional)", kind: "textarea", helper: "Only with the client's permission." },
+      { key: "quoteAuthor", label: "Quote author and role (optional)", kind: "text", placeholder: "Name, Role at Client" },
     ],
     /* Empty on purpose. A case study asserts what KodeDristi did for a named
        client and what it produced; seeding placeholders would publish work
@@ -1559,6 +1570,9 @@ export const SEO_PAGES: { slug: string; pageName: string; path: string }[] = [
   { slug: "products", pageName: "Products", path: "/products" },
   { slug: "projects", pageName: "Projects", path: "/projects" },
   { slug: "outsourcing", pageName: "Outsourcing & White Label", path: "/outsourcing" },
+  { slug: "erp-software-nepal", pageName: "ERP Software", path: "/erp-software-nepal" },
+  { slug: "digital-transformation-nepal", pageName: "Digital Transformation", path: "/digital-transformation-nepal" },
+  { slug: "industries", pageName: "Industries", path: "/industries" },
   { slug: "learn", pageName: "Learn", path: "/learn" },
   { slug: "insights", pageName: "Insights", path: "/insights" },
   { slug: "partners", pageName: "Partners", path: "/partners" },

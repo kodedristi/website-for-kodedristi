@@ -1,16 +1,14 @@
 import { listSubmissions, markSubmissionsRead } from "@/lib/db/queries";
 import { SubmissionsPanel } from "@/components/admin/submissions-panel";
+import { toSubmissionView } from "@/lib/submissions-view";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSubmissionsPage() {
-  const submissions = await listSubmissions();
-
-  const sectionCounts = submissions.reduce<Record<string, number>>((acc, s) => {
-    acc[s.section] = (acc[s.section] ?? 0) + 1;
-    return acc;
-  }, {});
-  const unreadCount = submissions.filter((s) => !s.read_at).length;
+  const rows = await listSubmissions();
+  const now = new Date();
+  const submissions = rows.map((row) => toSubmissionView(row, now));
+  const unreadCount = submissions.filter((s) => s.unread).length;
 
   // Opening the page is what counts as reading the list. Done after the rows
   // are already in hand, so this render still shows which ones were new.
@@ -28,19 +26,10 @@ export default async function AdminSubmissionsPage() {
         <h1 className="text-2xl font-semibold text-text-primary">Submissions</h1>
         <p className="mt-1 text-sm text-text-muted">
           Enquiries, proposals, course applications and partnership requests sent through the site.
+          Every enquiry includes the sender&apos;s email and phone number.
         </p>
       </div>
-      <SubmissionsPanel
-        submissions={submissions.map((s) => ({
-          id: s.id,
-          section: s.section,
-          data: s.data,
-          created_at: s.created_at.toLocaleString(),
-          unread: !s.read_at,
-        }))}
-        sectionCounts={sectionCounts}
-        newCount={unreadCount}
-      />
+      <SubmissionsPanel submissions={submissions} newCount={unreadCount} />
     </div>
   );
 }

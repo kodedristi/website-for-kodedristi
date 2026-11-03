@@ -46,6 +46,7 @@ const SERVICES = [
   { label: "SaaS product development", href: "/solutions/saas-products" },
   { label: "AI & automation", href: "/solutions/ai-automation" },
   { label: "Custom software development", href: "/solutions/custom-software" },
+  { label: "ERP software development", href: "/erp-software-nepal" },
   { label: "UI/UX design", href: "/solutions/ui-ux-design" },
   { label: "Cloud, DevOps & security", href: "/solutions/devops-security" },
 ];

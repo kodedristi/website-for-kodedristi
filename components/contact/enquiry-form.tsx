@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { solutions } from "@/lib/data/solutions";
 import { courses } from "@/lib/data/courses";
+import {
+  ContactDetailsFields,
+  Field,
+  Honeypot,
+  checkContactDetails,
+  fieldClasses,
+  postSubmission,
+  type FieldErrors,
+} from "@/components/contact/contact-fields";
 
 type Reason = "project" | "course" | "partnership" | "proposal";
 
@@ -19,10 +28,6 @@ const REASONS: { key: Reason; label: string }[] = [
 const BUDGET_RANGES = ["Under NPR 5 lakh", "NPR 5–15 lakh", "NPR 15–40 lakh", "NPR 40 lakh+", "Not sure yet"];
 const TIMELINES = ["ASAP", "Within 1 month", "1–3 months", "3–6 months", "Flexible"];
 const PARTNERSHIP_TYPES = ["Academic partnership", "Corporate training", "Hackathon sponsorship", "Referral partnership"];
-
-const fieldClasses =
-  "focus-ring w-full rounded-xl border-[0.5px] border-border bg-background px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:border-brand-blue";
-const labelClasses = "text-sm font-medium text-text-secondary";
 
 export function EnquiryForm({
   initialReason,
@@ -43,6 +48,7 @@ export function EnquiryForm({
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [error, setError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,11 +58,23 @@ export function EnquiryForm({
     const form = e.currentTarget;
     const data = new FormData(form);
     const value = (key: string) => data.get(key)?.toString() ?? "";
+
+    // Same rules the server applies; this only spares the visitor a round trip.
+    const problems = checkContactDetails({ name: value("name"), email: value("email"), phone: value("phone") });
+    setFieldErrors(problems);
+    if (Object.keys(problems).length > 0) {
+      setStatus("idle");
+      form.querySelector<HTMLElement>(`[name="${Object.keys(problems)[0]}"]`)?.focus();
+      return;
+    }
+
     const payload: Record<string, unknown> = {
       section: reason,
       name: value("name"),
-      contact: value("contact"),
+      email: value("email"),
+      phone: value("phone"),
       organization: value("organization"),
+      website: value("website"),
     };
     if (reason === "project") {
       payload.service = value("service");
@@ -97,18 +115,15 @@ export function EnquiryForm({
         }
       }
     }
-    try {
-      const res = await fetch("/api/contact/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("submit failed");
+    const result = await postSubmission(payload);
+    if (result.ok) {
       setStatus("submitted");
-    } catch {
-      setStatus("idle");
-      setError(true);
+      return;
     }
+    setStatus("idle");
+    setError(true);
+    setErrorMessage(result.message);
+    if (result.fields) setFieldErrors(result.fields);
   }
 
   if (status === "submitted") {
@@ -154,19 +169,9 @@ export function EnquiryForm({
         </div>
       )}
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Full name" htmlFor="name">
-          <input id="name" name="name" required className={fieldClasses} placeholder="Your full name" />
-        </Field>
-        <Field label="Work email or phone" htmlFor="contact">
-          <input id="contact" name="contact" required className={fieldClasses} placeholder="you@company.com" />
-        </Field>
-
-        {reason !== "course" && (
-          <Field label="Organization" htmlFor="organization">
-            <input id="organization" name="organization" className={fieldClasses} placeholder="Company / institution" />
-          </Field>
-        )}
+      <div className="relative grid gap-5 sm:grid-cols-2">
+        <Honeypot />
+        <ContactDetailsFields errors={fieldErrors} organization={reason !== "course"} />
 
         {reason === "project" && (
           <>
@@ -206,7 +211,7 @@ export function EnquiryForm({
                 ))}
               </select>
             </Field>
-            <Field label="Brief" htmlFor="brief" full>
+            <Field label="Brief" htmlFor="brief" full error={fieldErrors.brief}>
               <textarea
                 id="brief"
                 name="brief"
@@ -220,8 +225,8 @@ export function EnquiryForm({
 
         {reason === "course" && (
           <>
-            <Field label="Selected course" htmlFor="course">
-              <select id="course" name="course" className={fieldClasses} defaultValue="">
+            <Field label="Selected course" htmlFor="course" required error={fieldErrors.course}>
+              <select id="course" name="course" required className={fieldClasses} defaultValue="">
                 <option value="" disabled>
                   Select a course
                 </option>
@@ -275,7 +280,7 @@ export function EnquiryForm({
             <Field label="Contribution expected" htmlFor="contribution">
               <input id="contribution" name="contribution" className={fieldClasses} placeholder="e.g. funding, mentors, venue" />
             </Field>
-            <Field label="Audience / brand goals" htmlFor="goals" full>
+            <Field label="Audience / brand goals" htmlFor="goals" full error={fieldErrors.goals}>
               <textarea
                 id="goals"
                 name="goals"
@@ -289,7 +294,7 @@ export function EnquiryForm({
 
         {reason === "proposal" && (
           <>
-            <Field label="Proposal title" htmlFor="proposalTitle">
+            <Field label="Proposal title" htmlFor="proposalTitle" required error={fieldErrors.title}>
               <input
                 id="proposalTitle"
                 name="proposalTitle"
@@ -307,7 +312,7 @@ export function EnquiryForm({
                 placeholder="e.g., 500,000 - 2,000,000"
               />
             </Field>
-            <Field label="Proposal details" htmlFor="proposalDescription" full>
+            <Field label="Proposal details" htmlFor="proposalDescription" full required error={fieldErrors.description}>
               <textarea
                 id="proposalDescription"
                 name="proposalDescription"
@@ -354,26 +359,5 @@ export function EnquiryForm({
         )}
       </Button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  htmlFor,
-  children,
-  full,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-  full?: boolean;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-1.5", full && "sm:col-span-2")}>
-      <label htmlFor={htmlFor} className={labelClasses}>
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

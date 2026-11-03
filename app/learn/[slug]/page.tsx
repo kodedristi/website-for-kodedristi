@@ -18,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { getCourse, getCourses } from "@/lib/content/resolvers";
 import { buildDetailMetadata, SITE_URL } from "@/lib/content/seo";
 import { BreadcrumbJsonLd, CourseJsonLd } from "@/components/seo/json-ld";
+import { QuickAnswer } from "@/components/seo/quick-answer";
+import { AnswerFaq } from "@/components/seo/answer-faq";
+import { courseAnswers } from "@/lib/content/answers";
 
 export const revalidate = 3600;
 
@@ -72,6 +75,7 @@ export default async function CourseDetailPage({
   ];
 
   const all = await getCourses();
+  const { quick, faqs } = courseAnswers(course);
   const other = all.filter((c) => c.slug !== course.slug).slice(0, 3);
 
   return (
@@ -99,6 +103,8 @@ export default async function CourseDetailPage({
           </Button>
         </div>
       </PageHero>
+
+      <QuickAnswer label="Course summary">{quick}</QuickAnswer>
 
       <section className="py-20 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[1fr_320px]">
@@ -168,6 +174,8 @@ export default async function CourseDetailPage({
           </aside>
         </Container>
       </section>
+
+      <AnswerFaq title={`${course.name}: common questions`} items={faqs} />
     </>
   );
 }

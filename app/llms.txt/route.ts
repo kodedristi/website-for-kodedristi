@@ -16,6 +16,8 @@ export function GET() {
 ## Services
 - [Solutions](${SITE_URL}/solutions): custom software, web and mobile apps, SaaS, AI and automation, cloud and DevOps, UI/UX design, digital marketing
 - [Outsourcing & white label](${SITE_URL}/outsourcing): dedicated teams, fixed-scope projects and white-label development for agencies and companies
+- [ERP software](${SITE_URL}/erp-software-nepal): custom ERP and business systems for companies in Nepal
+- [Digital transformation](${SITE_URL}/digital-transformation-nepal): replacing manual processes with custom software, automation and AI
 - [Products](${SITE_URL}/products): billing software, accounting software and LMS
 - [Projects](${SITE_URL}/projects): case studies from business problem to result
 
