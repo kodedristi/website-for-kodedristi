@@ -327,7 +327,7 @@ Information shown on the Contact page.
 |-------|----------|-------------|
 | Icon | No | Icon identifier |
 | Label | Yes | e.g., "Phone", "Email" |
-| Value | Yes | e.g., "+977 9842863398" |
+| Value | Yes | e.g., "+977 9851362001" |
 | Link | No | tel:, mailto:, or URL |
 
 ---

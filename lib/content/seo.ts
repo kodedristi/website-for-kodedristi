@@ -13,6 +13,7 @@ import { getPageSeo } from "@/lib/content/resolvers";
  * from itself, and the homepage then never gets indexed.
  */
 const DEFAULT_SITE_URL = "https://www.kodedristi.com";
+const APEX_HOST = "kodedristi.com";
 
 function resolveSiteUrl(): string {
   const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -20,9 +21,14 @@ function resolveSiteUrl(): string {
   // A malformed value (a stray "||", a comment left inline) must not take the
   // whole build down at `new URL(SITE_URL)` — fall back to the default.
   try {
-    const cleaned = raw.replace(/\/+$/, "");
-    new URL(cleaned);
-    return cleaned;
+    const url = new URL(raw.replace(/\/+$/, ""));
+    // The bare domain only redirects to www, so an env var set to it (as the
+    // production one was) makes every canonical, sitemap entry and schema URL
+    // point at a page that redirects away. Search Console then reports
+    // "Page with redirect" for the whole site. Whatever the variable says,
+    // the apex is served as www.
+    if (url.hostname === APEX_HOST) url.hostname = `www.${APEX_HOST}`;
+    return url.origin;
   } catch {
     return DEFAULT_SITE_URL;
   }

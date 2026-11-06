@@ -53,11 +53,16 @@ export async function OrganizationJsonLd() {
         logo: LOGO_URL,
         image: LOGO_URL,
         description:
-          "Software company in Kathmandu, Nepal: custom software, web and mobile apps, SaaS, AI automation, software outsourcing, white-label development and applied IT courses.",
+          "IT and software company in Kathmandu, Nepal: custom software, web and mobile apps, ERP, CRM and accounting software, SaaS, AI automation, software outsourcing, white-label development and applied IT courses.",
         areaServed: SERVICE_AREA,
         availableLanguage: ["English", "Nepali"],
         knowsAbout: [
+          "IT services",
           "Custom software development",
+          "ERP software",
+          "CRM software",
+          "HR and payroll software",
+          "Accounting and billing software",
           "Web application development",
           "Mobile app development",
           "SaaS product development",

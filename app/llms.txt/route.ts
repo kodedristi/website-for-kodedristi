@@ -11,12 +11,15 @@ export const revalidate = 86400;
 export function GET() {
   const body = `# Kodedristi Software
 
-> Kodedristi Software Pvt. Ltd. is a premium software company in Kathmandu, Nepal. We build custom software, web and mobile apps, SaaS products and AI automation, offer software outsourcing and white-label development, and run practical IT courses.
+> Kodedristi Software Pvt. Ltd. is an IT and software development company in Kathmandu, Nepal. We build custom software, ERP, CRM and accounting software, web and mobile apps, SaaS products and AI automation, offer software outsourcing and white-label development, and run practical IT courses.
 
 ## Services
 - [Solutions](${SITE_URL}/solutions): custom software, web and mobile apps, SaaS, AI and automation, cloud and DevOps, UI/UX design, digital marketing
 - [Outsourcing & white label](${SITE_URL}/outsourcing): dedicated teams, fixed-scope projects and white-label development for agencies and companies
 - [ERP software](${SITE_URL}/erp-software-nepal): custom ERP and business systems for companies in Nepal
+- [CRM software](${SITE_URL}/crm-software-nepal): custom CRM for leads, customers and follow-ups
+- [HR and payroll software](${SITE_URL}/hr-payroll-software-nepal): attendance, leave and payroll
+- [Inventory management software](${SITE_URL}/inventory-management-software-nepal): stock, purchasing and sales
 - [Digital transformation](${SITE_URL}/digital-transformation-nepal): replacing manual processes with custom software, automation and AI
 - [Products](${SITE_URL}/products): billing software, accounting software and LMS
 - [Projects](${SITE_URL}/projects): case studies from business problem to result

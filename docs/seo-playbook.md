@@ -16,6 +16,23 @@ not from any single change.
 - [ ] Import the property into Bing Webmaster Tools.
 - [ ] Use URL Inspection → Request indexing on `/`, `/outsourcing`, `/solutions`, `/about`, `/contact`.
 
+## 0b. Reading Search Console → Pages ("Why pages aren't indexed")
+
+Click a reason to see the exact URLs; then decide whether it is expected.
+
+| Reason | Expected? | What to do |
+|---|---|---|
+| Excluded by 'noindex' tag | Yes for `/profile` and `/admin/login`: they carry noindex on purpose. | Nothing. If a **public** page is listed, untick "Hide from search engines" for it in Admin → SEO. |
+| Page with redirect | Yes for `/blog` (redirects to `/insights`) and for any `kodedristi.com` (no www) URL. | Nothing for those. If many URLs are listed, check their canonical host: it must be `www.kodedristi.com`. |
+| Not found (404) | Only for URLs that never existed or were removed on purpose. | Open the URL: if it should exist, restore it; if it moved, add a redirect in `next.config.ts`; otherwise leave it, Google drops 404s on its own. |
+| Alternate page with proper canonical tag | Yes: another page is the canonical. | Nothing, unless the canonical points at the wrong page. |
+
+After fixing anything, click **Validate fix**. Validation takes days to weeks; "Not started" is normal until you press it.
+
+**Canonical host.** Production once had `NEXT_PUBLIC_SITE_URL=https://kodedristi.com`, which made
+every canonical and sitemap URL point at the redirecting domain. The code now rewrites the bare
+domain to `www` whatever the variable says, but set it to `https://www.kodedristi.com` anyway.
+
 ## 1. Content SEO
 
 Each page targets one main search phrase. Keep the phrase in the title, the H1, the first

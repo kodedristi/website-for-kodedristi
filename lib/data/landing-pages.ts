@@ -37,9 +37,9 @@ export const LANDING_PAGES: LandingPage[] = [
   {
     slug: "erp-software-nepal",
     crumb: "ERP Software",
-    title: "ERP Software Development in Nepal",
+    title: "ERP Software in Nepal: Custom Enterprise Resource Planning",
     description:
-      "Custom ERP software for Nepali businesses: accounting, inventory, sales, HR and reporting in one system, scoped and built by Kodedristi in Kathmandu.",
+      "Custom enterprise resource planning (ERP) software for Nepali businesses: accounting, inventory, sales, HR and reporting in one system, built by Kodedristi in Kathmandu.",
     eyebrow: "ERP software",
     h1: "ERP software development for businesses in Nepal",
     intro:
@@ -121,6 +121,9 @@ export const LANDING_PAGES: LandingPage[] = [
       { label: "Custom software development", href: "/solutions/custom-software" },
       { label: "Billing software", href: "/products/billing-software" },
       { label: "Accounting software", href: "/products/accounting-software" },
+      { label: "CRM software", href: "/crm-software-nepal" },
+      { label: "HR & payroll software", href: "/hr-payroll-software-nepal" },
+      { label: "Inventory management software", href: "/inventory-management-software-nepal" },
       { label: "Web & mobile apps", href: "/solutions/web-mobile-apps" },
     ],
     faqs: [
@@ -223,6 +226,8 @@ export const LANDING_PAGES: LandingPage[] = [
     ],
     related: [
       { label: "ERP software development", href: "/erp-software-nepal" },
+      { label: "CRM software", href: "/crm-software-nepal" },
+      { label: "HR & payroll software", href: "/hr-payroll-software-nepal" },
       { label: "AI & automation", href: "/solutions/ai-automation" },
       { label: "Custom software development", href: "/solutions/custom-software" },
       { label: "Website development", href: "/solutions/website-development" },
@@ -254,6 +259,372 @@ export const LANDING_PAGES: LandingPage[] = [
       title: "Ready to take the first step?",
       body: "Tell us which process is slowing your business down. We will suggest a practical starting point.",
       label: "Talk to us about your business",
+    },
+  },
+  {
+    slug: "crm-software-nepal",
+    crumb: "CRM Software",
+    title: "CRM Software Development in Nepal",
+    description:
+      "Custom CRM software for Nepali businesses: track leads, customers and follow-ups in one system, connected to your website and billing, built by Kodedristi in Kathmandu.",
+    eyebrow: "CRM software",
+    h1: "CRM software development for businesses in Nepal",
+    intro:
+      "Keep every enquiry, customer and follow-up in one place, so sales do not depend on one person's phone or a shared spreadsheet.",
+    answer:
+      "Kodedristi builds custom CRM (customer relationship management) software for businesses in Nepal: lead capture from your website and enquiries, customer records, a sales pipeline with reminders, and reports, connected to the billing or accounting tools you already use. We scope it with you first, deliver in phases and hand over the source code.",
+    serviceName: "Custom CRM Software Development",
+    serviceType: "CRM software development",
+    sections: [
+      {
+        eyebrow: "Features",
+        title: "What a CRM can cover",
+        intro: "Pick what your team needs. Everything beyond that can be added later.",
+        cards: [
+          {
+            title: "Lead and enquiry capture",
+            body: "Website forms, phone enquiries and walk-ins land in one list with a source, an owner and a status.",
+          },
+          {
+            title: "Customer records",
+            body: "Contacts, companies, history, notes and documents together, so anyone can pick up a conversation.",
+          },
+          {
+            title: "Pipeline and follow-ups",
+            body: "Stages that match your sales process, with reminders so no enquiry goes quiet by accident.",
+          },
+          {
+            title: "Quotes and invoices",
+            body: "Move from a won deal to a quotation and invoice without re-typing, linked to your billing software.",
+          },
+          {
+            title: "Reports",
+            body: "Leads by source, conversion by stage, and sales by person, drawn from the same live data.",
+          },
+          {
+            title: "Integrations",
+            body: "Your website, email, SMS and payment tools, connected through APIs where they offer them.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Choosing",
+        title: "Custom CRM or an off-the-shelf one?",
+        cards: [
+          {
+            title: "A ready-made CRM fits when",
+            body: "Your sales process is standard, your team is small and you mainly need contacts, a pipeline and reminders.",
+          },
+          {
+            title: "A custom CRM fits when",
+            body: "Your process has unusual stages, approvals or pricing rules, or the CRM must sit inside a system you already run.",
+          },
+          {
+            title: "Either way",
+            body: "Decide who owns the data, how you will export it, and what it will cost as your team grows.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Process",
+        title: "How we deliver a CRM",
+        cards: [
+          {
+            title: "1. Map the sales process",
+            body: "We follow an enquiry from first contact to payment and agree the stages, fields and reports you need.",
+          },
+          {
+            title: "2. Build the core first",
+            body: "Leads, customers and pipeline go live first so your team starts using it and feedback shapes the rest.",
+          },
+          {
+            title: "3. Migrate and train",
+            body: "We import your existing contacts, train the team and stay close through the first weeks.",
+          },
+        ],
+      },
+    ],
+    related: [
+      { label: "ERP software development", href: "/erp-software-nepal" },
+      { label: "Billing software", href: "/products/billing-software" },
+      { label: "Custom software development", href: "/solutions/custom-software" },
+      { label: "Digital transformation", href: "/digital-transformation-nepal" },
+    ],
+    faqs: [
+      {
+        question: "What is CRM software?",
+        answer:
+          "CRM stands for customer relationship management. It is software that records every lead, customer and interaction in one place and helps a team follow up, so sales do not rely on memory, chat history or scattered spreadsheets.",
+      },
+      {
+        question: "What is the best CRM for a small business in Nepal?",
+        answer:
+          "It depends on your process and size. A ready-made CRM is usually enough when your sales steps are standard. Look at how easily you can export your data, whether it works for your team's language and devices, support when you need it, and the price at your team size in two or three years. If none fit your process, a custom build may.",
+      },
+      {
+        question: "Can the CRM connect to our website and billing?",
+        answer:
+          "Yes. Website forms can create leads automatically, and a won deal can become a quotation or invoice in your billing or accounting software. We confirm the exact integrations during scoping.",
+      },
+      {
+        question: "How long does a CRM project take?",
+        answer:
+          "A focused CRM with leads, customers and a pipeline is usually delivered in phases, with the core in use well before the whole system is finished. You get a written timeline after scoping.",
+      },
+      {
+        question: "Do we own the source code?",
+        answer:
+          "Ownership and handover of the source code and documentation are agreed in the contract before work begins.",
+      },
+    ],
+    cta: {
+      title: "Want a CRM that fits how you sell?",
+      body: "Tell us how an enquiry becomes a customer today. We will reply with questions, an approach and an estimate.",
+      label: "Discuss your CRM project",
+    },
+  },
+  {
+    slug: "hr-payroll-software-nepal",
+    crumb: "HR & Payroll Software",
+    title: "HR & Payroll Software Development in Nepal",
+    description:
+      "HR and payroll software for Nepali companies: employee records, attendance, leave and salary processing built around your rules by Kodedristi in Kathmandu.",
+    eyebrow: "HR & payroll software",
+    h1: "HR and payroll software development for companies in Nepal",
+    intro:
+      "Employee records, attendance, leave and monthly payroll in one system, instead of a spreadsheet that one person understands.",
+    answer:
+      "Kodedristi builds custom HR and payroll software for companies in Nepal: employee records, attendance from devices or mobile check-in, leave management and salary processing with payslips, set up around your own pay rules. Statutory deductions such as tax and social security contributions are confirmed with your accountant during scoping, because the rules change.",
+    serviceName: "Custom HR and Payroll Software Development",
+    serviceType: "HR and payroll software development",
+    sections: [
+      {
+        eyebrow: "Modules",
+        title: "What HR and payroll software can cover",
+        intro: "Small companies often start with attendance and payroll, then add the rest.",
+        cards: [
+          {
+            title: "Employee records",
+            body: "Profiles, contracts, documents and history in one secure place with role-based access.",
+          },
+          {
+            title: "Attendance",
+            body: "Entries from biometric devices, mobile check-in or manual correction, with shifts and late rules you define.",
+          },
+          {
+            title: "Leave management",
+            body: "Leave types, balances, requests and approvals, visible to employees and managers.",
+          },
+          {
+            title: "Payroll",
+            body: "Salary structures, allowances, deductions and advances calculated from attendance, with payslips and bank-ready summaries.",
+          },
+          {
+            title: "Employee self-service",
+            body: "Staff view payslips, apply for leave and update details without asking the office.",
+          },
+          {
+            title: "Reports",
+            body: "Headcount, attendance, leave and payroll cost, ready for management and your accountant.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Accuracy",
+        title: "Getting payroll right",
+        cards: [
+          {
+            title: "Rules written down first",
+            body: "We document how your company pays, including overtime, allowances and unpaid leave, before any code.",
+          },
+          {
+            title: "Statutory rules checked",
+            body: "Tax and social security rules are confirmed with your accountant and updated when the rules change.",
+          },
+          {
+            title: "Audit trail",
+            body: "Every change to pay data is logged, so you can explain any figure to an employee or auditor.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Process",
+        title: "How we deliver it",
+        cards: [
+          {
+            title: "1. Map current practice",
+            body: "We review how attendance, leave and salaries are handled today and where errors creep in.",
+          },
+          {
+            title: "2. Run in parallel",
+            body: "The first payroll runs beside your existing method so you can compare results before switching over.",
+          },
+          {
+            title: "3. Train and support",
+            body: "We train HR and managers and stay available through the first pay cycles.",
+          },
+        ],
+      },
+    ],
+    related: [
+      { label: "ERP software development", href: "/erp-software-nepal" },
+      { label: "Accounting software", href: "/products/accounting-software" },
+      { label: "Custom software development", href: "/solutions/custom-software" },
+      { label: "Digital transformation", href: "/digital-transformation-nepal" },
+    ],
+    faqs: [
+      {
+        question: "Does a small company need payroll software?",
+        answer:
+          "Once you have more than a handful of staff, or pay varies with attendance, overtime or allowances, a spreadsheet becomes slow and error-prone. Payroll software saves the monthly calculation time and gives employees clear payslips. A very small team with fixed salaries may manage without it.",
+      },
+      {
+        question: "Can it work with our attendance devices?",
+        answer:
+          "Often yes. Many biometric attendance devices can export or sync records, and we can also support mobile check-in. We confirm which devices you use and how they connect during scoping.",
+      },
+      {
+        question: "Does it handle tax and social security deductions?",
+        answer:
+          "We build the calculation rules you need and confirm the current statutory requirements with you and your accountant, since they change. We do not assume them.",
+      },
+      {
+        question: "Can employees see their own payslips and leave?",
+        answer:
+          "Yes. Employee self-service lets staff view payslips, check leave balances and request leave, with access limited to their own records.",
+      },
+      {
+        question: "Do we own the source code?",
+        answer:
+          "Ownership and handover of the source code and documentation are agreed in the contract before work begins.",
+      },
+    ],
+    cta: {
+      title: "Ready to simplify HR and payroll?",
+      body: "Describe how you track attendance and pay staff today. We will suggest an approach and an estimate.",
+      label: "Discuss HR and payroll software",
+    },
+  },
+  {
+    slug: "inventory-management-software-nepal",
+    crumb: "Inventory Management Software",
+    title: "Inventory Management Software in Nepal",
+    description:
+      "Inventory management software for Nepali shops, distributors and warehouses: stock, purchasing and sales in one system, built by Kodedristi in Kathmandu.",
+    eyebrow: "Inventory management software",
+    h1: "Inventory management software for businesses in Nepal",
+    intro:
+      "Know what you have, where it is and when to reorder, across one shop or several, without counting by hand.",
+    answer:
+      "Kodedristi builds custom inventory management software for businesses in Nepal: stock across shops or warehouses, purchasing and suppliers, sales and billing, batch and expiry tracking where you need it, and reorder alerts. It can stand alone or become the stock module of a larger ERP, and we hand over the source code.",
+    serviceName: "Custom Inventory Management Software Development",
+    serviceType: "Inventory management software development",
+    sections: [
+      {
+        eyebrow: "Features",
+        title: "What inventory software can cover",
+        intro: "Retailers, distributors, pharmacies and manufacturers need different things, so we build to your case.",
+        cards: [
+          {
+            title: "Multi-location stock",
+            body: "Quantities per shop, warehouse or van, with transfers between them recorded and traceable.",
+          },
+          {
+            title: "Purchasing and suppliers",
+            body: "Purchase orders, goods received, supplier records and what you owe, matched to stock.",
+          },
+          {
+            title: "Sales and billing",
+            body: "Every sale reduces stock automatically and links to your invoices and receipts.",
+          },
+          {
+            title: "Batches and expiry",
+            body: "Batch numbers and expiry dates with near-expiry alerts, for products where they matter.",
+          },
+          {
+            title: "Reorder alerts",
+            body: "Minimum levels per item that warn you before you run out, not after.",
+          },
+          {
+            title: "Barcodes and reports",
+            body: "Barcode scanning for speed, plus stock valuation, movement and slow-moving reports.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Fit",
+        title: "Who it is for",
+        cards: [
+          {
+            title: "Shops and retailers",
+            body: "Fast billing, accurate counts and fewer losses from untracked stock.",
+          },
+          {
+            title: "Distributors and wholesalers",
+            body: "Several locations, credit customers and supplier orders handled in one place.",
+          },
+          {
+            title: "Pharmacies and similar trades",
+            body: "Batch and expiry control so old stock is sold first and expired stock is flagged.",
+          },
+        ],
+      },
+      {
+        eyebrow: "Process",
+        title: "How we deliver it",
+        cards: [
+          {
+            title: "1. Understand your stock flow",
+            body: "We follow goods from supplier to shelf to customer and agree the items, units and rules.",
+          },
+          {
+            title: "2. Load your data",
+            body: "We import your item list and opening stock, and check counts with you before go-live.",
+          },
+          {
+            title: "3. Go live and refine",
+            body: "We train your staff, support the first weeks and adjust from real use.",
+          },
+        ],
+      },
+    ],
+    related: [
+      { label: "ERP software development", href: "/erp-software-nepal" },
+      { label: "Billing software", href: "/products/billing-software" },
+      { label: "Accounting software", href: "/products/accounting-software" },
+      { label: "Custom software development", href: "/solutions/custom-software" },
+    ],
+    faqs: [
+      {
+        question: "What is inventory management software?",
+        answer:
+          "It is software that tracks the quantity and location of your stock, records purchases and sales, and tells you when to reorder, so counts stay accurate without manual tallying.",
+      },
+      {
+        question: "Can it handle several shops or warehouses?",
+        answer:
+          "Yes. Stock is held per location, with transfers between locations recorded, and reports can be viewed per location or combined.",
+      },
+      {
+        question: "Can it track batches and expiry dates?",
+        answer:
+          "Yes, where your products need it. Batch numbers and expiry dates can be recorded on receipt and shown at sale, with alerts for stock nearing expiry.",
+      },
+      {
+        question: "Does it connect to billing and accounting?",
+        answer:
+          "Yes. Sales can create invoices and reduce stock in one step, and purchases and stock value can flow into your accounts. We confirm the connections during scoping.",
+      },
+      {
+        question: "Do we own the source code?",
+        answer:
+          "Ownership and handover of the source code and documentation are agreed in the contract before work begins.",
+      },
+    ],
+    cta: {
+      title: "Ready to get stock under control?",
+      body: "Tell us what you sell and how many locations you run. We will reply with an approach and an estimate.",
+      label: "Discuss inventory software",
     },
   },
 ];

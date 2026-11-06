@@ -70,6 +70,9 @@ export const navGroups: NavGroup[] = [
       { label: "Accounting Software", href: "/products/accounting-software", description: "Books, reconciled and always current." },
       { label: "LMS", href: "/products/lms", description: "Learning management for institutions." },
       { label: "ERP Software", href: "/erp-software-nepal", description: "Custom ERP built around your business." },
+      { label: "CRM Software", href: "/crm-software-nepal", description: "Leads, customers and follow-ups in one place." },
+      { label: "HR & Payroll", href: "/hr-payroll-software-nepal", description: "Attendance, leave and payroll." },
+      { label: "Inventory Software", href: "/inventory-management-software-nepal", description: "Stock, purchasing and sales." },
     ],
   },
 ];

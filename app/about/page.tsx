@@ -22,7 +22,7 @@ export const revalidate = 3600;
  */
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata("about", {
-    title: "About Us — Software Company in Nepal",
+    title: "About Us — IT & Software Company in Nepal",
     description:
       "About Kodedristi, a software development company in Kathmandu, Nepal: our mission, values, leadership, engineering capabilities and a supportive team culture.",
     path: "/about",

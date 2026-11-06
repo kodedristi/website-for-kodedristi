@@ -17,9 +17,9 @@ export const PRODUCT_SEO: Record<string, { title: string; description: string }>
       "Billing software for businesses in Nepal: recurring and one-off invoices, payment tracking, reminders and reports, built by Kodedristi in Kathmandu.",
   },
   "accounting-software": {
-    title: "Accounting Software in Nepal for Growing Businesses",
+    title: "Accounting Software in Nepal for Small Business",
     description:
-      "Accounting software built in Nepal: general ledger, bank reconciliation, multi-user roles and financial reports for finance teams, by Kodedristi.",
+      "Accounting software for small and growing businesses in Nepal: general ledger, bank reconciliation, multi-user roles and financial reports, built by Kodedristi.",
   },
   lms: {
     title: "LMS Software in Nepal for Institutes & Training Providers",

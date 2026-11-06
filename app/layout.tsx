@@ -21,14 +21,17 @@ const albertSans = Albert_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Software Development Company in Nepal — Kodedristi Software",
+    default: "IT & Software Development Company in Nepal — Kodedristi Software",
     template: "%s — Kodedristi Software",
   },
   description:
-    "Kodedristi Software Pvt. Ltd. is a software development company in Kathmandu, Nepal building custom software, web and mobile apps, ERP, billing and accounting software, SaaS and AI solutions, with software outsourcing and IT courses.",
+    "Kodedristi Software Pvt. Ltd. is an IT and software development company in Kathmandu, Nepal building custom software, web and mobile apps, ERP, CRM, accounting and billing software, SaaS and AI solutions, with software outsourcing and IT courses.",
   // Google ignores this tag; kept short for other engines. The real targeting
   // lives in each page's title, H1 and copy (see docs/seo-keyword-map.md).
   keywords: [
+    "IT company in Nepal",
+    "best IT company in Nepal",
+    "IT company in Kathmandu",
     "software company Nepal",
     "software development company Nepal",
     "software company Kathmandu",
@@ -37,6 +40,9 @@ export const metadata: Metadata = {
     "web development company Nepal",
     "mobile app development company Nepal",
     "ERP software Nepal",
+    "CRM software Nepal",
+    "HR payroll software Nepal",
+    "inventory management software Nepal",
     "billing software Nepal",
     "accounting software Nepal",
     "AI development company Nepal",

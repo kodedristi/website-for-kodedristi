@@ -62,8 +62,10 @@ Columns to fill from Keyword Planner and Search Console: **monthly volume**, **d
 The Homepage row in the admin currently holds its own title and description, and **it wins over
 the code defaults**. Replace them with:
 
-- **Title:** `Software Development Company in Nepal — Kodedristi`
-- **Description:** `Kodedristi is a software development company in Kathmandu, Nepal: custom software, web and mobile apps, ERP, billing and accounting software, AI and outsourcing.`
+- **Title:** `IT Company in Nepal — Software Development | Kodedristi`
+- **Description:** `Kodedristi is an IT and software development company in Kathmandu, Nepal: custom software, web and mobile apps, ERP, CRM, accounting software, AI and outsourcing.`
+
+(Changed 2026-11-06 after the Google Trends data in section 7: people in Nepal search "IT company".)
 
 ## 4. Local (Kathmandu)
 
@@ -90,4 +92,39 @@ TechBehemoths, SoftwareSuggest. The community-maintained
 list on GitHub accepts pull requests. Also pursue the partners and universities already on the
 site (ask for a link from their project or partner page), and publish the hackathon results as
 press releases. No paid links, networks or bulk directories.
+
+## 7. Google Trends, Nepal, 2026 (supplied 2026-11-06)
+
+Four Google Trends exports (Jan to Nov 2026, Nepal). How to read them, and what was done:
+
+**Caveats.** Trends gives *relative* interest (0 to 100 inside one export), not search volume, and
+the four exports are scaled separately, so numbers cannot be compared between files. "Increase
+percent" on a base of 0 or 1 is noise (a rise from 0 to 1 shows as thousands of percent), so those
+rows are treated as direction only. Rows with no link to our business (Walmart and Lidl "near me",
+anime and streaming apps, "task earning" apps, consumer antivirus, photo editing) were ignored.
+
+| Signal in the data | What it says | Applied |
+|---|---|---|
+| "it company in nepal" 100, "it company near me" 16 (+250%), "best it company in nepal" 13, "it company in kathmandu" 12, "leapfrog" 3 | In Nepal the head term is **"IT company"**, not "software company". Leapfrog is the brand people search for next to it. | Homepage title, description, layout default, About title, Organization schema and `llms.txt` now lead with "IT company in Nepal". |
+| "accounting software" 5 (+50%), "accounting software solutions", "best small business accounting software", "accounting software for small business" | Strongest business-software interest, and small business is the qualifier. | Accounting product title retargeted to "small business"; new article *Accounting Software for Small Business in Nepal*. |
+| "erp software", "enterprise resource planning software" (Breakout) | The spelled-out phrase is rising. | ERP page title and description now use "enterprise resource planning". |
+| "crm software" (+60%), "best crm software for small business" (Breakout) | Small-business CRM demand. | New page `/crm-software-nepal`, with the "best CRM for a small business" question answered in its FAQ. |
+| "human resources software" (+650%), "payroll software for small companies" (Breakout), "zkteco attendance management software" | HR, payroll and attendance devices are all moving. | New page `/hr-payroll-software-nepal`. |
+| "inventory management software" (+50%), "ims software", "pharma software" | Stock tracking, including batch and expiry. | New page `/inventory-management-software-nepal`. |
+| "website to app" 100 (the top query in its export), "nagarik app" 4 | People want to turn websites into apps. "mobile app development" itself is falling (-50%). | New article *Website to App*; no extra spend on the generic "mobile app development" head term. |
+| "software testing" 3 (+100%), "software testing strategies" 2 (+2,300%), "mvp in software development" (+120%), "agile methodology" (+70%), "react development", "node.js backend", "docker containerization" | Developer-learning interest. It feeds the courses and the engineering brand. | New article *Software Testing Strategies*. MVP and agile are next in the queue. |
+| "software engineer" 5, "software engineering" 5, "software engineer salary" 2 | Career interest. | Covered by *How to Become a Software Engineer in Nepal*. A salary article needs real pay data first, so it is not written. |
+| "shikshya software" (school software), "busy software", "sathi software", "cheque printing software" | Local product-brand searches. | Not targeted. These are competitors' product names; ranking on them would need a real product. |
+
+No signal in these exports for security products (the only security term is consumer antivirus)
+or SaaS as a category, so nothing was added for them.
+
+**Also supplied (a pasted list, not an export): "Creative Cloud ~2.24M, Technology ~1M, AI ~673K,
+VR ~301K searches".** The source and region are unknown and the figures are unverified. They are
+global, generic head terms with no buying intent for a Nepal software company, and Creative Cloud
+is an Adobe product search. AI is already covered by the AI pages and articles; VR and "technology"
+were not targeted.
+
+**Next, in order:** MVP in software development (startups); agile methodology; a school
+management page only if a real product exists; the articles in section 5.
 ok
