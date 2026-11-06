@@ -22,6 +22,7 @@ import {
   Note01Icon,
   SearchVisualIcon,
   Settings02Icon,
+  ChartUpIcon,
 } from "hugeicons-react";
 import { LogoutButton } from "@/components/admin/logout-button";
 import type { AdminNavGroup } from "@/lib/content/schemas";
@@ -65,6 +66,10 @@ const NAV_SECTIONS: { heading: string; links: Omit<NavLinkSpec, "badge">[] }[] =
   {
     heading: "Library",
     links: [{ href: "/admin/media", label: "Media", icon: Image01Icon, exact: false }],
+  },
+  {
+    heading: "Insights",
+    links: [{ href: "/admin/traffic", label: "Traffic", icon: ChartUpIcon, exact: false }],
   },
   {
     heading: "Inbox",

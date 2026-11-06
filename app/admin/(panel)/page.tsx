@@ -28,11 +28,16 @@ import {
   Image01Icon,
 } from "hugeicons-react";
 
+import { getTrafficReport } from "@/lib/db/traffic";
+import { suggest } from "@/lib/traffic";
+import { Suggestions } from "@/components/admin/traffic/traffic-widgets";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const [analytics, submissions, users, content, unreadSubmissions] = await Promise.all([
+  const [analytics, trafficReport, submissions, users, content, unreadSubmissions] = await Promise.all([
     getAnalytics(),
+    getTrafficReport("7d").catch(() => null),
     listSubmissions(),
     listUsersWithCourses(),
     getTypeSummary(),
@@ -40,6 +45,9 @@ export default async function AdminDashboard() {
   ]);
 
   const maxDaily = Math.max(1, ...analytics.daily.map((d) => d.visitors));
+  const suggestions = trafficReport
+    ? suggest(trafficReport, { googleAnalyticsConnected: Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim()) })
+    : null;
   const contentCount = content.reduce((sum, c) => sum + c.count, 0);
 
   const stats = [
@@ -235,7 +243,12 @@ export default async function AdminDashboard() {
 
       <div className="grid gap-6 lg:grid-cols-5">
         <section className="card p-6 lg:col-span-3">
-          <h2 className="text-sm font-semibold text-text-primary">Visitors · last 14 days</h2>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-sm font-semibold text-text-primary">Visitors · last 14 days</h2>
+            <Link href="/admin/traffic" className="focus-ring inline-flex items-center gap-1 text-sm font-semibold text-link">
+              Traffic insights <ArrowRight01Icon className="h-4 w-4" />
+            </Link>
+          </div>
           <div className="mt-5 flex h-40 items-end gap-1.5">
             {analytics.daily.length === 0 && (
               <p className="text-sm text-text-muted">No visits recorded yet.</p>
@@ -259,85 +272,22 @@ export default async function AdminDashboard() {
         </section>
 
         <section className="card p-6 lg:col-span-2">
-          <h2 className="text-sm font-semibold text-text-primary">Top pages</h2>
-          <ul className="mt-4 flex flex-col divide-y divide-border">
-            {analytics.topPages.length === 0 && <li className="py-2 text-sm text-text-muted">No data yet.</li>}
-            {analytics.topPages.map((p) => (
-              <li key={p.page} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="truncate text-sm text-text-secondary">{p.page}</span>
-                <span className="rounded-full bg-background-secondary px-2 py-0.5 text-xs font-semibold text-text-muted">
-                  {p.views}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-sm font-semibold text-text-primary">What to do next</h2>
+            <span className="text-xs text-text-muted">last 7 days</span>
+          </div>
+          <div className="mt-4">
+            {suggestions ? (
+              <Suggestions items={suggestions} limit={3} />
+            ) : (
+              <p className="text-sm text-text-muted">Suggestions are unavailable right now.</p>
+            )}
+          </div>
+          <Link href="/admin/traffic" className="focus-ring mt-4 inline-flex items-center gap-1 text-sm font-semibold text-link">
+            Open full traffic report <ArrowRight01Icon className="h-4 w-4" />
+          </Link>
         </section>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {[
-          { title: "Traffic sources", rows: analytics.topSources.map((r) => ({ label: r.source, n: r.visitors })) },
-          { title: "Devices", rows: analytics.devices.map((r) => ({ label: r.device, n: r.visitors })) },
-          { title: "Countries", rows: analytics.countries.map((r) => ({ label: r.country, n: r.visitors })) },
-        ].map((block) => (
-          <section key={block.title} className="card p-6">
-            <h2 className="text-sm font-semibold text-text-primary">
-              {block.title} <span className="font-normal text-text-muted">· visitors</span>
-            </h2>
-            <ul className="mt-4 flex flex-col divide-y divide-border">
-              {block.rows.length === 0 && <li className="py-2 text-sm text-text-muted">No data yet.</li>}
-              {block.rows.map((r) => (
-                <li key={r.label} className="flex items-center justify-between gap-3 py-2.5">
-                  <span className="truncate text-sm capitalize text-text-secondary">{r.label}</span>
-                  <span className="rounded-full bg-background-secondary px-2 py-0.5 text-xs font-semibold text-text-muted">
-                    {r.n}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-
-      <section className="card p-6">
-        <div className="flex items-center gap-2">
-          <ChartBarLineIcon className="h-6 w-6 text-link" />
-          <h2 className="text-sm font-semibold text-text-primary">Recent visits</h2>
-        </div>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-xs uppercase tracking-wider text-text-muted">
-                <th className="pb-2 pr-4 font-semibold">Time</th>
-                <th className="pb-2 pr-4 font-semibold">IP</th>
-                <th className="pb-2 pr-4 font-semibold">Page</th>
-                <th className="pb-2 pr-4 font-semibold">Source</th>
-                <th className="pb-2 pr-4 font-semibold">Device</th>
-                <th className="pb-2 font-semibold">Country</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {analytics.recent.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-4 text-text-muted">
-                    No visits recorded yet.
-                  </td>
-                </tr>
-              )}
-              {analytics.recent.map((v) => (
-                <tr key={v.id} className="text-text-secondary">
-                  <td className="whitespace-nowrap py-2.5 pr-4">{v.created_at.toLocaleString()}</td>
-                  <td className="whitespace-nowrap py-2.5 pr-4">{v.ip ?? "—"}</td>
-                  <td className="max-w-[200px] truncate py-2.5 pr-4">{v.page ?? "—"}</td>
-                  <td className="max-w-[160px] truncate py-2.5 pr-4">{v.source ?? "—"}</td>
-                  <td className="py-2.5 pr-4 capitalize">{v.device ?? "—"}</td>
-                  <td className="py-2.5 text-text-muted" title={v.userAgent ?? undefined}>{v.country ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </div>
   );
 }
