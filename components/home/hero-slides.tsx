@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Magnetic } from "@/components/motion/magnetic";
@@ -97,7 +97,7 @@ function HeroMatrix({ index, reduceMotion }: { index: number; reduceMotion: bool
 }
 
 export function HeroSlides({ slides }: { slides: HeroSlide[] }) {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [index, setIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);

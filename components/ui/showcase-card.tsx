@@ -132,6 +132,9 @@ export function ShowcaseCard({
             className="after:absolute after:inset-0 after:z-1 after:content-['']"
           >
             {actionLabel}
+            {/* Several tiles share the label "Learn more"; the hidden title
+                is what tells a screen reader or a crawler which one this is. */}
+            <span className="sr-only"> about {title}</span>
           </Button>
           {secondary && (
             /* Above the overlay, or the primary action eats this click. */

@@ -38,7 +38,10 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
 
   if (!user) {
     return (
-      <Link
+      /* A plain anchor, not <Link>: this is an API route that redirects to
+         Google, and <Link> prefetches it on every page, which the browser
+         blocks as a cross-origin fetch and logs as a console error. */
+      <a
         href="/api/auth/google"
         className={cn(
           "focus-ring inline-flex items-center justify-center gap-2 rounded-full border-[0.5px] border-border bg-white font-semibold text-link shadow-sm transition-colors hover:bg-background-secondary",
@@ -46,7 +49,7 @@ export function SignInButton({ compact = false }: { compact?: boolean }) {
         )}
       >
         <GoogleLogo className="h-4 w-4" /> Sign in
-      </Link>
+      </a>
     );
   }
 

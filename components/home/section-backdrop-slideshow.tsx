@@ -1,10 +1,42 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
-import { useReducedMotion } from "framer-motion";
+import { getImageProps } from "next/image";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+
+/**
+ * One slide's picture, art-directed in the markup itself.
+ *
+ * The mobile image used to be chosen in JavaScript after hydration, so a
+ * phone downloaded the desktop image first (the server render cannot know the
+ * viewport), then a second one once the script ran, and its largest paint
+ * moved from one to the other. A `<picture>` lets the browser pick before it
+ * fetches anything. `getImageProps` keeps next/image's resizing and formats.
+ */
+function SlidePicture({
+  src,
+  mobileSrc,
+  priority,
+}: {
+  src: string;
+  mobileSrc?: string;
+  priority: boolean;
+}) {
+  const common = { alt: "", fill: true, sizes: "100vw", priority } as const;
+  const {
+    props: { srcSet: desktopSet, ...img },
+  } = getImageProps({ ...common, src });
+  const mobileSet = mobileSrc ? getImageProps({ ...common, src: mobileSrc }).props.srcSet : undefined;
+
+  return (
+    <picture>
+      {mobileSet && <source media="(max-width: 767px)" srcSet={mobileSet} sizes="100vw" />}
+      {/* eslint-disable-next-line @next/next/no-img-element -- props come from getImageProps */}
+      <img {...img} srcSet={desktopSet} className="object-cover object-center" />
+    </picture>
+  );
+}
 
 export type BackdropSlide = {
   imageUrl: string;
@@ -47,11 +79,7 @@ export function SectionBackdropSlideshow({
    *  the active slide's text colour. */
   children?: React.ReactNode;
 }) {
-  const reduceMotion = useReducedMotion();
-  /* `(max-width: …)` rather than `(min-width: …)`: the hook's server snapshot
-     is always false, so this way the pre-hydration render picks the desktop
-     image — the safe fallback, since the mobile variant is optional. */
-  const isNarrow = useMediaQuery("(max-width: 767px)");
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [index, setIndex] = useState(0);
 
   const ordered = useMemo(
@@ -91,8 +119,6 @@ export function SectionBackdropSlideshow({
           )}
         >
           {ordered.map((slide, i) => {
-            const src =
-              isNarrow && slide.mobileImageUrl ? slide.mobileImageUrl : slide.imageUrl;
             const wash = Number(slide.overlayOpacity ?? 0) / 100;
             const slideTone = slide.textTone === "dark" ? "dark" : "light";
             return (
@@ -103,13 +129,10 @@ export function SectionBackdropSlideshow({
                   i === active ? "opacity-100" : "opacity-0"
                 )}
               >
-                <Image
-                  src={src}
-                  alt=""
-                  fill
-                  sizes="100vw"
+                <SlidePicture
+                  src={slide.imageUrl}
+                  mobileSrc={slide.mobileImageUrl}
                   priority={i === 0}
-                  className="object-cover object-center"
                 />
                 {/* Tinted to match the text: white copy wants the picture
                     pushed darker, black copy wants it pushed lighter. Only

@@ -118,7 +118,7 @@ export function Navbar({ navGroups }: { navGroups: NavGroup[] }) {
                 ONE PARTNER. EVERY SOLUTION. EVERY STEP OF THE WAY.
               </span>
               <div className="flex items-center gap-3 text-nav-text-muted sm:gap-4">
-                <a href="tel:+9779842863398" className="flex items-center gap-1.5 font-medium transition-colors hover:text-nav-text">
+                <a href="tel:+9779842863398" aria-label="Call us" className="flex items-center gap-1.5 font-medium transition-colors hover:text-nav-text">
                   <Call02Icon className="h-5.25 w-5.25" />
                   <span className="hidden sm:inline">+977 9851362001</span>
                 </a>

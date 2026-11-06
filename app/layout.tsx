@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Albert_Sans } from "next/font/google";
 import "./globals.css";
-import { FirstLoadSplash } from "@/components/motion/first-load-splash";
+import { FirstLoadSplash, SPLASH_SEEN_SCRIPT } from "@/components/motion/first-load-splash";
 import { Navbar } from "@/components/site-header/navbar";
 import { Footer } from "@/components/site-footer/footer";
 import { GlobalChrome } from "@/components/global-chrome";
@@ -89,8 +89,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`h-full antialiased ${albertSans.variable}`}
+      /* The head script adds `no-splash` to this element before React hydrates. */
+      suppressHydrationWarning
     >
       <head>
+        {/* Marks repeat visits before first paint so the splash never draws
+            for someone who has already seen it this session. */}
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_SEEN_SCRIPT }} />
         {/* Scroll reveals are written into the server markup as opacity: 0,
             so with scripting off there is nothing left to turn them back on.
             `!important` is what lets a stylesheet rule beat those inline

@@ -493,6 +493,65 @@ body {
 }
 
 
+/* First-load splash (components/motion/first-load-splash.tsx).
+   Timing lives here, not in script: the logo settles at first paint,
+   holds 600ms, then the overlay fades over 400ms and stops catching
+   clicks, whether or not the JavaScript has arrived. The reduced-motion
+   rule near the end of this file makes the fade instant; the shorter
+   hold below keeps the flash brief. `.no-splash` is set on <html> by
+   a head script on repeat visits in a session. */
+.splash-logo { animation: splash-logo-in 500ms var(--ease-out-quint) both; }
+.splash-root { animation: splash-out 400ms ease 600ms forwards; }
+.no-splash .splash-root { display: none; }
+@keyframes splash-logo-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes splash-out {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .splash-root { animation-delay: 150ms; }
+}
+
+/* ---------------------------------------------------------
+   Scroll reveals (see components/motion/reveal.tsx).
+
+   Pure CSS scroll-driven animation: no JavaScript, and the markup is
+   visible in the server HTML, so nothing waits for hydration to
+   appear. A block fades in over the first ~140px of its entry into the
+   viewport; one already on screen at load is past that range and
+   simply shows. `min(…, 100%)` stops a short block near the end of the
+   page from being left half-faded when the page cannot scroll further.
+
+   Browsers without animation-timeline, and visitors who ask for
+   reduced motion, get the content with no animation.
+--------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    [data-reveal] {
+      animation: reveal-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry min(140px, 100%);
+    }
+    [data-reveal][data-from="left"] { animation-name: reveal-left; }
+    [data-reveal][data-from="right"] { animation-name: reveal-right; }
+    [data-reveal][data-from="none"] { animation-name: reveal-fade; }
+
+    /* Sequence inside a group: each sibling starts a step later. */
+    [data-reveal-group] > [data-reveal]:nth-child(2) { animation-range: entry calc(var(--reveal-step, 24px) * 1) entry min(calc(140px + var(--reveal-step, 24px) * 1), 100%); }
+    [data-reveal-group] > [data-reveal]:nth-child(3) { animation-range: entry calc(var(--reveal-step, 24px) * 2) entry min(calc(140px + var(--reveal-step, 24px) * 2), 100%); }
+    [data-reveal-group] > [data-reveal]:nth-child(4) { animation-range: entry calc(var(--reveal-step, 24px) * 3) entry min(calc(140px + var(--reveal-step, 24px) * 3), 100%); }
+    [data-reveal-group] > [data-reveal]:nth-child(5) { animation-range: entry calc(var(--reveal-step, 24px) * 4) entry min(calc(140px + var(--reveal-step, 24px) * 4), 100%); }
+    [data-reveal-group] > [data-reveal]:nth-child(n + 6) { animation-range: entry calc(var(--reveal-step, 24px) * 5) entry min(calc(140px + var(--reveal-step, 24px) * 5), 100%); }
+  }
+}
+
+@keyframes reveal-up    { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-left  { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-right { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+@keyframes reveal-fade  { from { opacity: 0; } to { opacity: 1; } }
+
 /* ---------------------------------------------------------
    Hero entrance — the one authored moment on this site.
 

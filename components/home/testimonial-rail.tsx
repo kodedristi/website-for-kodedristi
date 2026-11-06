@@ -8,7 +8,7 @@ import {
   PlayIcon,
   QuoteUpIcon,
 } from "hugeicons-react";
-import { useReducedMotion } from "framer-motion";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
 export type TestimonialItem = {
@@ -72,7 +72,7 @@ export function TestimonialRail({ items }: { items: TestimonialItem[] }) {
   const railRef = useRef<HTMLUListElement>(null);
   const videosRef = useRef(new Map<string, HTMLVideoElement>());
 
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [atStart, setAtStart] = useState(true);
@@ -253,6 +253,28 @@ function TestimonialCard({
   const source = videoSource(item.videoUrl);
   const isEmbed = source.kind === "embed";
 
+  // These clips are tens of megabytes and the rail sits far below the fold, so
+  // nothing is fetched until the card is within a screen or so of view. Even
+  // `preload="metadata"` pulled hundreds of KiB per clip on page load.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card || !hasVideo || isEmbed || near || typeof IntersectionObserver === "undefined") return;
+    // Without IntersectionObserver the clip simply stays on preload="none"
+    // and loads when someone presses play.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setNear(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 600px 600px 600px" }
+    );
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, [hasVideo, isEmbed, near]);
+
   // A clip playing off-screen is disembodied audio and a wasted download —
   // with these files a large one. Stop it once its card leaves the viewport.
   useEffect(() => {
@@ -320,7 +342,7 @@ function TestimonialCard({
               poster={item.posterUrl}
               muted
               playsInline
-              preload="metadata"
+              preload={near ? "metadata" : "none"}
               controls={reduceMotion}
               onEnded={() => {
                 if (videoRef.current) {

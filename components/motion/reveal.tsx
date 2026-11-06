@@ -1,88 +1,63 @@
-"use client";
-
-import { useRef } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
-import { DURATION, EASE, REVEAL_DISTANCE, STAGGER, VIEWPORT_MARGIN } from "@/lib/motion";
+import type { CSSProperties, ElementType } from "react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Scroll reveals, done in CSS.
+ *
+ * These used to be framer-motion islands that server-rendered every block as
+ * `opacity: 0` and waited for hydration, an IntersectionObserver and a spring
+ * to make it visible. On a phone that held the headline and the first screen of
+ * content invisible for as long as the JavaScript took to arrive, which is
+ * exactly the time Largest Contentful Paint and Speed Index are measuring.
+ *
+ * Now the markup is plain and visible, and where the browser supports
+ * scroll-driven animation (`animation-timeline: view()`) the rule in
+ * globals.css fades each block in as it enters the viewport. Blocks already on
+ * screen at load are past their entry range and simply show. Browsers without
+ * support, and anyone with `prefers-reduced-motion`, get the content with no
+ * animation at all. Nothing here ships JavaScript, so these are server
+ * components and can sit inside client ones.
+ *
+ * `delay` is accepted so existing call sites keep compiling, but a scroll
+ * timeline has no clock to delay: sequence is expressed by position instead
+ * (see RevealGroup).
+ */
 
 type RevealProps = {
   children: React.ReactNode;
   className?: string;
   /** Direction the content travels from. "none" fades in place. */
   from?: "up" | "left" | "right" | "none";
-  /** Seconds to wait before starting. Use sparingly — prefer RevealGroup. */
+  /** Ignored; see above. */
   delay?: number;
   /** Render as a different element (e.g. "section", "li"). */
   as?: "div" | "section" | "li" | "article" | "span";
 };
 
-/**
- * Scroll reveal for a single block.
- *
- * Deliberately a *client* island: the home page sections are async server
- * components that fetch CMS content, so they must stay on the server. They
- * wrap their children in this instead of becoming client components
- * themselves — the children are still server-rendered and passed through
- * as an already-resolved React node.
- *
- * Fires once. Content that re-animates every time it scrolls past is the
- * single fastest way to make a site feel cheap.
- */
-export function Reveal({
-  children,
-  className,
-  from = "up",
-  delay = 0,
-  as = "div",
-}: RevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: VIEWPORT_MARGIN });
-  const reduceMotion = useReducedMotion();
-
-  // Indexing `motion` by tag name yields a union whose ref type is the
-  // intersection of every element type, which nothing can satisfy. The tag is
-  // correct at runtime; this narrows it to one concrete signature for TS.
-  const MotionTag = motion[as] as typeof motion.div;
-
-  // With reduced motion we still fade (a 0→1 opacity carries no vestibular
-  // risk) but drop all travel, which is the part that causes discomfort.
-  const offset = reduceMotion || from === "none" ? {} : from === "up"
-    ? { y: REVEAL_DISTANCE }
-    : { x: from === "left" ? -REVEAL_DISTANCE : REVEAL_DISTANCE };
-
+export function Reveal({ children, className, from = "up", as = "div" }: RevealProps) {
+  const Tag: ElementType = as;
+  /* `data-reveal` also marks the block for the `<noscript>` rule in the root
+     layout, kept as a belt-and-braces guarantee that scripting-off visitors
+     never see hidden content. */
   return (
-    <MotionTag
-      ref={ref}
-      initial={{ opacity: 0, ...offset }}
-      animate={inView ? { opacity: 1, x: 0, y: 0 } : undefined}
-      transition={{
-        duration: reduceMotion ? DURATION.ui : DURATION.reveal,
-        ease: EASE.outExpo,
-        delay,
-      }}
-      /* Marks every reveal for the `<noscript>` rule in the root layout,
-         which forces them visible. The motion library writes `opacity: 0`
-         into the server-rendered markup, so without that escape hatch a
-         browser with scripting off would be served a blank page. */
-      data-reveal=""
-      className={cn(className)}
-    >
+    <Tag data-reveal="" data-from={from} className={cn(className)}>
       {children}
-    </MotionTag>
+    </Tag>
   );
 }
 
 /**
  * Reveals direct children in sequence.
  *
- * Uses variants so the stagger is computed by the animation system rather
- * than by hand-assigned delays — which means adding or removing a child
- * never requires renumbering the others.
+ * The sequence is positional: each later child starts its fade a few pixels
+ * further into the scroll than the one before. `stagger` is the old
+ * seconds-between-siblings value; it is converted to that pixel step so the
+ * groups that asked for a tighter or looser cadence still get one.
  */
 export function RevealGroup({
   children,
   className,
-  stagger = STAGGER,
+  stagger = 0.06,
   as = "div",
 }: {
   children: React.ReactNode;
@@ -90,32 +65,18 @@ export function RevealGroup({
   stagger?: number;
   as?: "div" | "ul" | "section";
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: VIEWPORT_MARGIN });
-  const reduceMotion = useReducedMotion();
-
-  const MotionTag = motion[as] as typeof motion.div;
-
+  const Tag: ElementType = as;
+  const style = { "--reveal-step": `${Math.round(stagger * 400)}px` } as CSSProperties;
   return (
-    <MotionTag
-      ref={ref}
-      initial="hidden"
-      animate={inView ? "visible" : "hidden"}
-      variants={{
-        hidden: {},
-        // Staggering the *container* leaves children free to define their
-        // own motion, so a card and a heading can differ inside one group.
-        visible: { transition: { staggerChildren: reduceMotion ? 0 : stagger } },
-      }}
-      className={cn(className)}
-    >
+    <Tag data-reveal-group="" style={style} className={cn(className)}>
       {children}
-    </MotionTag>
+    </Tag>
   );
 }
 
 /**
- * A single child of RevealGroup. Inherits timing from its parent's stagger.
+ * A single child of RevealGroup. Takes its place in the sequence from its
+ * position among its siblings.
  */
 export function RevealItem({
   children,
@@ -126,26 +87,10 @@ export function RevealItem({
   className?: string;
   as?: "div" | "li" | "article";
 }) {
-  const reduceMotion = useReducedMotion();
-  const MotionTag = motion[as];
-
+  const Tag: ElementType = as;
   return (
-    <MotionTag
-      variants={{
-        hidden: { opacity: 0, y: reduceMotion ? 0 : REVEAL_DISTANCE },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: reduceMotion ? DURATION.ui : DURATION.reveal,
-            ease: EASE.outExpo,
-          },
-        },
-      }}
-      data-reveal=""
-      className={cn(className)}
-    >
+    <Tag data-reveal="" data-from="up" className={cn(className)}>
       {children}
-    </MotionTag>
+    </Tag>
   );
 }

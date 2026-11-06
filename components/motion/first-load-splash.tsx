@@ -1,111 +1,68 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
 
 /**
- * First-load splash: the animated KodeDristi logo shown once, while the
- * site's initial page load is finishing.
+ * First-load splash: the KodeDristi logo shown once, over the first moment of
+ * the page.
  *
- * Why it only appears once: it mounts in the root layout, and Next.js keeps
- * the layout mounted across client-side navigations, so the effect never
- * re-runs on subsequent route changes.
+ * Why it only appears once: it mounts in the root layout, which Next.js keeps
+ * mounted across client-side navigations. A session flag, read by a tiny
+ * script in the document head before first paint (see `SPLASH_SEEN_SCRIPT`),
+ * also skips it on a reload or return visit in the same tab.
  *
- * Deliberately bare: the mark on the page's own background, easing up to
- * full size, and nothing else. It previously sat inside a breathing halo and
- * a sonar ring with a progress beam beneath, all of which have been removed —
- * a splash that decorates itself competes with the site it is introducing.
- *
- * It holds for a minimum time so it reads as deliberate, then fades out once
- * the window has loaded (capped by MAX_WAIT_MS as a backstop). Under
- * `prefers-reduced-motion` it only flashes quietly before yielding.
+ * Its timing is CSS, not JavaScript. It used to lift only once the script had
+ * hydrated the page and the window `load` event had fired, so on a phone the
+ * visitor stared at a logo for as long as the JavaScript took to arrive, while
+ * the page behind it was already in the HTML. Now `.splash-root` plays a fixed
+ * hold-then-fade (globals.css) that starts at first paint and ends the same
+ * moment however slow the device is. This component only takes the finished,
+ * invisible overlay out of the DOM afterwards.
  */
 
-// Kept short on purpose: the splash covers the first paint, so every extra
-// millisecond here is a millisecond the visitor stares at a logo instead of
-// the site. Long enough for the mark's own settle to read, no longer.
-const MIN_HOLD_MS = 900;
-const MAX_WAIT_MS = 2200;
+export const SPLASH_SEEN_KEY = "kd-splash-seen";
 
-function prefersReducedMotion() {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
+/** Runs in <head> before first paint: marks the document so the overlay is
+ *  never drawn on a repeat visit. */
+export const SPLASH_SEEN_SCRIPT = `try{if(sessionStorage.getItem("${SPLASH_SEEN_KEY}")==="1")document.documentElement.classList.add("no-splash")}catch(e){}`;
+
+/** Hold (600ms) + fade (400ms) from globals.css, plus a little slack. */
+const SPLASH_TOTAL_MS = 1100;
 
 export function FirstLoadSplash() {
-  const [visible, setVisible] = useState(true);
-  const settled = useRef(false);
+  const [gone, setGone] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      const timer = setTimeout(() => setVisible(false), 250);
-      return () => clearTimeout(timer);
+    try {
+      sessionStorage.setItem(SPLASH_SEEN_KEY, "1");
+    } catch {
+      // Storage blocked: every page load behaves like a first visit.
     }
-
-    let loaded = document.readyState === "complete";
-    const maybeHide = () => {
-      if (!loaded || settled.current) return;
-      settled.current = true;
-      setVisible(false);
-    };
-    const forceHide = () => {
-      settled.current = true;
-      setVisible(false);
-    };
-
-    const onLoad = () => {
-      loaded = true;
-      maybeHide();
-    };
-
-    const minHold = setTimeout(maybeHide, MIN_HOLD_MS);
-    const maxWait = setTimeout(forceHide, MAX_WAIT_MS);
-
-    window.addEventListener("load", onLoad);
-    return () => {
-      window.removeEventListener("load", onLoad);
-      clearTimeout(minHold);
-      clearTimeout(maxWait);
-    };
+    const timer = setTimeout(() => setGone(true), Math.max(0, SPLASH_TOTAL_MS - performance.now()));
+    return () => clearTimeout(timer);
   }, []);
 
+  if (gone) return null;
+
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          key="first-load-splash"
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background"
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          role="status"
-          aria-label="KodeDristi is loading"
-        >
-          {/* The mark alone. The halo, the sonar ring and the progress track
-              that used to surround it are gone by request — with them removed
-              the logo is the whole splash, and its own settle is the only
-              motion left. */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="relative h-24 w-[214px]">
-              <Image
-                src="/images/logo.png"
-                alt="KodeDristi Software Pvt. Ltd."
-                fill
-                priority
-                className="object-contain object-center"
-                sizes="214px"
-              />
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div
+      className="splash-root fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background"
+      role="status"
+      aria-label="KodeDristi is loading"
+    >
+      <div className="splash-logo">
+        <div className="relative h-24 w-[214px]">
+          <Image
+            src="/images/logo.png"
+            alt="KodeDristi Software Pvt. Ltd."
+            fill
+            priority
+            className="object-contain object-center"
+            sizes="214px"
+          />
+        </div>
+      </div>
+    </div>
   );
 }
