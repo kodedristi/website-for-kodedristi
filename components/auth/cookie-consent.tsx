@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Cancel01Icon, InformationSquareIcon } from "hugeicons-react";
+import { GA_ENABLED } from "@/components/auth/google-analytics";
 
 const CONSENT_EVENT = "kd-consent-change";
 
@@ -47,7 +48,10 @@ export function CookieConsent() {
         </div>
         <p className="mt-2 text-[13px] leading-relaxed text-text-muted">
           We use a small set of essential cookies to count unique visitors, keep you signed in, and
-          remember your preferences. Nothing is sold or shared.
+          remember your preferences.{" "}
+          {GA_ENABLED
+            ? "“Accept all” also lets us use Google Analytics to understand how the site is used. We never sell your data."
+            : "Nothing is sold or shared."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <button

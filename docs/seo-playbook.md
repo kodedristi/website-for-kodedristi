@@ -109,6 +109,33 @@ traffic and links.
 - [ ] Short videos of the team and projects (YouTube Shorts, Reels) with the company name in the
       title and description.
 
+## 4b. Visitor tracking
+
+Two separate tools, both consent-aware.
+
+**Admin dashboard (built in, always on).** Every real page view is one row in the `visits` table.
+Shown: page views, visitors, sessions, visitors today and in the last 7 days, active now (last
+5 minutes), top pages, traffic sources, devices and countries. How it counts:
+
+- A visitor is the browser (the `kd_vid` cookie), not the IP address, so two people on one
+  mobile network or office line count as two.
+- A session ends after 30 minutes without a page view.
+- Bots, crawlers, link previews, speed tests (Lighthouse) and automated browsers are not counted.
+- The traffic source is where the visit started (the referrer, or `?utm_source=`), and it stays
+  with the session. Tag campaign links with `?utm_source=facebook&utm_medium=social`.
+- Days are Nepal time. Country needs the site to be on Vercel (it reads Vercel's geo header).
+- Counting started when this tracker was deployed. Older rows counted one visit per IP per
+  30 minutes and included bots, so the dashboard does not show them.
+
+**Google Analytics 4 (optional).** Create a GA4 property, copy the Measurement ID (`G-…`) into the
+`NEXT_PUBLIC_GA_MEASUREMENT_ID` environment variable in Vercel and redeploy. Nothing loads, and
+Google is never contacted, until a visitor presses "Accept all". The cookie banner mentions Google
+Analytics only when the ID is set. Check it in GA4 → Reports → Realtime.
+
+**Bing Webmaster Tools.** Verification is done two ways: the `msvalidate.01` meta tag in the root
+layout, and `/BingSiteAuth.xml` (from `public/`). Either works; after deploying, click Verify in
+Bing Webmaster Tools, then submit `https://www.kodedristi.com/sitemap.xml`.
+
 ## 5. Measure
 
 Check weekly in Search Console: impressions, clicks, average position per page and query, indexing

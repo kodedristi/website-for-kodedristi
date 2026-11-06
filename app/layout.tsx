@@ -7,6 +7,7 @@ import { Footer } from "@/components/site-footer/footer";
 import { GlobalChrome } from "@/components/global-chrome";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { AnalyticsTracker } from "@/components/auth/analytics-tracker";
+import { GoogleAnalytics } from "@/components/auth/google-analytics";
 import { CookieConsent } from "@/components/auth/cookie-consent";
 import { navGroups } from "@/lib/data/nav";
 import { getSolutions } from "@/lib/content/resolvers";
@@ -26,6 +27,11 @@ export const metadata: Metadata = {
   },
   description:
     "Kodedristi Software Pvt. Ltd. is an IT and software development company in Kathmandu, Nepal building custom software, web and mobile apps, ERP, CRM, accounting and billing software, SaaS and AI solutions, with software outsourcing and IT courses.",
+  // Bing Webmaster Tools site verification: rendered as
+  // <meta name="msvalidate.01" content="…"> in the <head> of every page.
+  verification: {
+    other: { "msvalidate.01": "EB3F1A1B00724AE35FB9BE40BE47DADD" },
+  },
   // Google ignores this tag; kept short for other engines. The real targeting
   // lives in each page's title, H1 and copy (see docs/seo-keyword-map.md).
   keywords: [
@@ -123,6 +129,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </GlobalChrome>
         <AnalyticsTracker />
+        <GoogleAnalytics />
         <CookieConsent />
       </body>
     </html>

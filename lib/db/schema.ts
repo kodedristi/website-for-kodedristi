@@ -24,6 +24,18 @@ CREATE TABLE IF NOT EXISTS visits (
 );
 CREATE INDEX IF NOT EXISTS idx_visits_ip_time ON visits (ip, created_at);
 CREATE INDEX IF NOT EXISTS idx_visits_created ON visits (created_at);
+-- Visitor tracking v2: one row per real page view, with the session, device,
+-- country and traffic source. Added by ALTER so an existing database picks the
+-- columns up on the next boot. Rows from before this have session_id NULL, and
+-- the dashboard counts only rows that have one (see getAnalytics).
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS session_id text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS device text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS country text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS referrer_host text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS utm_source text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS utm_medium text;
+CREATE INDEX IF NOT EXISTS idx_visits_visitor_time ON visits (visitor_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_visits_session ON visits (session_id);
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
   id bigserial PRIMARY KEY,

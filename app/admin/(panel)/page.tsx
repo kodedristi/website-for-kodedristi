@@ -43,10 +43,12 @@ export default async function AdminDashboard() {
   const contentCount = content.reduce((sum, c) => sum + c.count, 0);
 
   const stats = [
-    { label: "Total page views", value: analytics.totalViews, icon: EyeIcon },
-    { label: "Unique visitors", value: analytics.uniqueVisitors, icon: UserMultipleIcon },
-    { label: "Today", value: analytics.today, icon: Calendar01Icon },
-    { label: "Last 7 days", value: analytics.last7Days, icon: ChartUpIcon },
+    { label: "Page views", value: analytics.totalViews, icon: EyeIcon },
+    { label: "Visitors", value: analytics.uniqueVisitors, icon: UserMultipleIcon },
+    { label: "Visitors today", value: analytics.today, icon: Calendar01Icon },
+    { label: "Visitors, last 7 days", value: analytics.last7Days, icon: ChartUpIcon },
+    { label: "Sessions", value: analytics.sessions, icon: ChartBarLineIcon },
+    { label: "Active now (5 min)", value: analytics.activeNow, icon: UserMultipleIcon },
   ];
 
   const countOf = (type: string) => content.find((c) => c.type === type)?.count ?? 0;
@@ -149,7 +151,7 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {stats.map((s) => (
           <div key={s.label} className="card flex items-center gap-4 p-5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-blue/10 text-link">
@@ -162,6 +164,12 @@ export default async function AdminDashboard() {
           </div>
         ))}
       </div>
+
+      <p className="-mt-3 text-xs text-text-muted">
+        {analytics.trackingSince
+          ? `Counting real visitors (bots excluded) since ${analytics.trackingSince.toLocaleDateString()}. Earlier figures recorded one visit per IP per 30 minutes and included crawlers, so they are not shown.`
+          : "Waiting for the first real visitor. Bots, crawlers and automated browsers are not counted."}
+      </p>
 
       <div className="flex flex-col gap-3">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">Manage</p>
@@ -266,6 +274,31 @@ export default async function AdminDashboard() {
         </section>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-3">
+        {[
+          { title: "Traffic sources", rows: analytics.topSources.map((r) => ({ label: r.source, n: r.visitors })) },
+          { title: "Devices", rows: analytics.devices.map((r) => ({ label: r.device, n: r.visitors })) },
+          { title: "Countries", rows: analytics.countries.map((r) => ({ label: r.country, n: r.visitors })) },
+        ].map((block) => (
+          <section key={block.title} className="card p-6">
+            <h2 className="text-sm font-semibold text-text-primary">
+              {block.title} <span className="font-normal text-text-muted">· visitors</span>
+            </h2>
+            <ul className="mt-4 flex flex-col divide-y divide-border">
+              {block.rows.length === 0 && <li className="py-2 text-sm text-text-muted">No data yet.</li>}
+              {block.rows.map((r) => (
+                <li key={r.label} className="flex items-center justify-between gap-3 py-2.5">
+                  <span className="truncate text-sm capitalize text-text-secondary">{r.label}</span>
+                  <span className="rounded-full bg-background-secondary px-2 py-0.5 text-xs font-semibold text-text-muted">
+                    {r.n}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+
       <section className="card p-6">
         <div className="flex items-center gap-2">
           <ChartBarLineIcon className="h-6 w-6 text-link" />
@@ -278,13 +311,15 @@ export default async function AdminDashboard() {
                 <th className="pb-2 pr-4 font-semibold">Time</th>
                 <th className="pb-2 pr-4 font-semibold">IP</th>
                 <th className="pb-2 pr-4 font-semibold">Page</th>
-                <th className="pb-2 font-semibold">User agent</th>
+                <th className="pb-2 pr-4 font-semibold">Source</th>
+                <th className="pb-2 pr-4 font-semibold">Device</th>
+                <th className="pb-2 font-semibold">Country</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {analytics.recent.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-4 text-text-muted">
+                  <td colSpan={6} className="py-4 text-text-muted">
                     No visits recorded yet.
                   </td>
                 </tr>
@@ -294,7 +329,9 @@ export default async function AdminDashboard() {
                   <td className="whitespace-nowrap py-2.5 pr-4">{v.created_at.toLocaleString()}</td>
                   <td className="whitespace-nowrap py-2.5 pr-4">{v.ip ?? "—"}</td>
                   <td className="max-w-[200px] truncate py-2.5 pr-4">{v.page ?? "—"}</td>
-                  <td className="max-w-[260px] truncate py-2.5 text-text-muted">{v.userAgent ?? "—"}</td>
+                  <td className="max-w-[160px] truncate py-2.5 pr-4">{v.source ?? "—"}</td>
+                  <td className="py-2.5 pr-4 capitalize">{v.device ?? "—"}</td>
+                  <td className="py-2.5 text-text-muted" title={v.userAgent ?? undefined}>{v.country ?? "—"}</td>
                 </tr>
               ))}
             </tbody>
