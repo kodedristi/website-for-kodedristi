@@ -15,6 +15,7 @@ import {
 } from "hugeicons-react";
 import { ICON_MAP } from "@/lib/content/icons";
 import type { ContentItem } from "@/lib/content/schemas";
+import { formatNepal, formatNepalShort, isScheduled, parsePublishAt } from "@/lib/content/scheduling";
 import { cn } from "@/lib/utils";
 
 export type ContentListRow = Omit<ContentItem, "createdAt" | "updatedAt"> & {
@@ -272,27 +273,46 @@ export function ContentList({
               </Link>
 
               <div className="flex shrink-0 items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => togglePublish(item)}
-                  disabled={busy !== null}
-                  title={item.published ? "Published — click to unpublish" : "Unpublished — click to publish"}
-                  className={cn(
-                    "focus-ring inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-60",
-                    item.published
-                      ? "border-brand-green/30 bg-brand-green/10 text-brand-green-hover hover:bg-brand-green/20"
-                      : "border-border bg-background text-text-muted hover:border-brand-blue/40 hover:text-text-secondary"
-                  )}
-                >
-                  {busy === `pub-${item.id}` ? (
-                    <Loading01Icon className="h-5.25 w-5.25 animate-spin" />
-                  ) : item.published ? (
-                    <CheckmarkCircle02Icon className="h-5.25 w-5.25" />
-                  ) : (
-                    <span className="h-2 w-2 rounded-full bg-text-muted" />
-                  )}
-                  {item.published ? "Live" : "Draft"}
-                </button>
+                {(() => {
+                  /* A published article with a future publish time is not on
+                     the site yet — say so, with the date, instead of "Live". */
+                  const waiting =
+                    type === "article" && item.published && isScheduled(item.data as { publishAt?: string });
+                  const at = waiting ? parsePublishAt((item.data as { publishAt?: string }).publishAt) : null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => togglePublish(item)}
+                      disabled={busy !== null}
+                      title={
+                        waiting && at
+                          ? `Scheduled for ${formatNepal(at)} — click to unpublish`
+                          : item.published
+                            ? "Published — click to unpublish"
+                            : "Unpublished — click to publish"
+                      }
+                      className={cn(
+                        "focus-ring inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors disabled:opacity-60",
+                        waiting
+                          ? "border-brand-amber/40 bg-brand-amber/10 text-brand-amber-text hover:bg-brand-amber/20"
+                          : item.published
+                            ? "border-brand-green/30 bg-brand-green/10 text-brand-green-hover hover:bg-brand-green/20"
+                            : "border-border bg-background text-text-muted hover:border-brand-blue/40 hover:text-text-secondary"
+                      )}
+                    >
+                      {busy === `pub-${item.id}` ? (
+                        <Loading01Icon className="h-5.25 w-5.25 animate-spin" />
+                      ) : waiting ? (
+                        <span className="h-2 w-2 rounded-full bg-brand-amber" />
+                      ) : item.published ? (
+                        <CheckmarkCircle02Icon className="h-5.25 w-5.25" />
+                      ) : (
+                        <span className="h-2 w-2 rounded-full bg-text-muted" />
+                      )}
+                      {waiting && at ? `Scheduled · ${formatNepalShort(at)}` : item.published ? "Live" : "Draft"}
+                    </button>
+                  );
+                })()}
 
                 <Link
                   href={`/admin/content/${type}/${item.id}`}

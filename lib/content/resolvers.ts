@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   listContent,
+  listAllSlugs,
   getContentBySlug,
   getSingletonData,
 } from "@/lib/content/store";
+import { isLive, nepalDate, parsePublishAt } from "@/lib/content/scheduling";
 import { iconForKey } from "@/lib/content/icons";
 import type {
   SolutionData,
@@ -90,14 +92,36 @@ export async function getProduct(slug: string): Promise<ProductView | null> {
 }
 
 // ---- Articles ----
+/**
+ * An article as the public site shows it. A scheduled article's printed date
+ * is the day it goes live, so the date on the page can never disagree with the
+ * schedule that published it.
+ */
+function publicArticle(data: ArticleData, slug: string | null): ArticleData & { slug: string } {
+  const at = parsePublishAt(data.publishAt);
+  return { ...data, slug: slug ?? "", ...(at !== null ? { date: nepalDate(at) } : {}) };
+}
+
+/** Published articles whose publish time has arrived. Scheduled ones stay hidden until then. */
 export async function getArticles(): Promise<(ArticleData & { slug: string })[]> {
   const items = await listContent<ArticleData>("article");
-  return items.map((i) => ({ ...i.data, slug: i.slug ?? "" }));
+  const now = Date.now();
+  return items.filter((i) => isLive(i.data, now)).map((i) => publicArticle(i.data, i.slug));
 }
 export async function getArticle(slug: string): Promise<(ArticleData & { slug: string }) | null> {
   const item = await getContentBySlug<ArticleData>("article", slug);
   if (!item) return null;
-  return { ...item.data, slug: item.slug ?? "" };
+  if (!isLive(item.data)) return null;
+  // `getContentBySlug` falls back to the shipped seed copy when the database row
+  // is not published. For an article that would undo "move to drafts" (and a
+  // delete): the page would keep serving the seed text. A slug the database
+  // knows about but does not publish stays hidden; the seed copy is only for
+  // when the database cannot answer at all.
+  if (item.id === 0) {
+    const known = await listAllSlugs("article");
+    if (known?.has(slug)) return null;
+  }
+  return publicArticle(item.data, item.slug);
 }
 
 // ---- Simple collections ----

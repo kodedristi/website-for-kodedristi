@@ -32,6 +32,10 @@ export type FieldKind =
   | "icon"
   | "tone"
   | "list"
+  /** A string[] edited as Markdown (see components/admin/markdown-editor.tsx). */
+  | "markdown"
+  /** A `datetime-local` value, read as Nepal time. */
+  | "datetime"
   | "json"
   | "check"
   | "image";
@@ -128,6 +132,12 @@ export type ArticleData = {
   image?: string;
   category: string;
   date: string;
+  /**
+   * When the article goes live, as a `datetime-local` value in Nepal time
+   * ("2026-11-16T09:00"). Empty means "as soon as it is published"; a future
+   * value keeps it off the site until then. See lib/content/scheduling.ts.
+   */
+  publishAt?: string;
   readTime: string;
   /** A team member's name, exactly as on the Team page. Links the article to their profile. */
   author?: string;
@@ -824,10 +834,11 @@ export const CONTENT_SCHEMAS: ContentSchema[] = [
       { key: "excerpt", label: "Excerpt", kind: "textarea" },
       { key: "image", label: "Card image", kind: "image", helper: "Shown on the showcase card. Leave empty and the card keeps the space reserved." },
       { key: "category", label: "Category", kind: "text" },
-      { key: "date", label: "Date (YYYY-MM-DD)", kind: "text" },
+      { key: "date", label: "Date (YYYY-MM-DD)", kind: "text", helper: "Shown on the article. If a publish time is set below, that day is shown instead." },
+      { key: "publishAt", label: "Publish on (Nepal time)", kind: "datetime", helper: "Optional. Leave empty to publish as soon as you save. A future date keeps the article off the site until then — see Schedule on the Blog screen to space several out." },
       { key: "readTime", label: "Read time", kind: "text" },
       { key: "author", label: "Author (optional)", kind: "text", helper: "A team member's name exactly as it appears on the Team page. Gives the article a named author with a profile page; leave empty to credit the company." },
-      { key: "body", label: "Body (one paragraph per line)", kind: "list" },
+      { key: "body", label: "Body", kind: "markdown", helper: "Written in Markdown. Use ## headings for sections — they become the contents list on the article page." },
     ],
     fallback: serializeArticles,
   },

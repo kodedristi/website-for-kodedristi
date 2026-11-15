@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/content/seo";
 import { PageHero } from "@/components/ui/page-hero";
-import {
-  ShowcaseCard,
-  showcaseGridInner,
-  showcaseGridOuter,
-  showcaseTone,
-} from "@/components/ui/showcase-card";
-import { RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { Container } from "@/components/ui/container";
+import { InsightsBrowser } from "@/components/insights/insights-browser";
 import { getArticles, getPageHero } from "@/lib/content/resolvers";
 
-export const revalidate = 3600;
+// Ten minutes, not an hour: a scheduled article appears the first time this
+// page is rebuilt after its publish time (see lib/content/scheduling.ts).
+export const revalidate = 600;
 
 /**
  * Title, description, canonical and social tags come from this page's
@@ -35,40 +32,28 @@ export default async function InsightsPage() {
     description: "Notes from our engineering and delivery teams — practical, not promotional.",
   };
 
+  // Newest first, so the featured post is the latest one. Only the fields the
+  // list needs cross to the client — not every article body.
+  const posts = [...articles]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .map((a) => ({
+      slug: a.slug,
+      title: a.title,
+      excerpt: a.excerpt,
+      image: a.image,
+      category: a.category,
+      date: a.date,
+      readTime: a.readTime,
+    }));
+
   return (
     <>
       <PageHero eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
 
       <section className="section">
-        <div className={showcaseGridOuter}>
-          <RevealGroup className={showcaseGridInner}>
-            {articles.map((article, i) => (
-              <RevealItem key={article.slug} className="flex">
-                <ShowcaseCard
-                  tone={showcaseTone(i)}
-                  eyebrow={article.category}
-                  title={article.title}
-                  description={article.excerpt}
-                  href={`/insights/${article.slug}`}
-                  actionLabel="Read article"
-                  image={article.image}
-                  meta={
-                    <>
-                      <span>
-                        {new Date(article.date).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                      <span>{article.readTime}</span>
-                    </>
-                  }
-                />
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </div>
+        <Container>
+          <InsightsBrowser posts={posts} />
+        </Container>
       </section>
     </>
   );

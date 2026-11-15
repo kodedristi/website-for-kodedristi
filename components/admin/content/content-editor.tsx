@@ -10,6 +10,7 @@ import {
   pickerButtonClass,
   type MediaItem,
 } from "@/components/admin/media-picker";
+import { MarkdownEditor } from "@/components/admin/markdown-editor";
 import { slugify, type ContentField, type ContentItem } from "@/lib/content/schemas";
 import { cn } from "@/lib/utils";
 
@@ -265,6 +266,50 @@ export function ContentEditor({
             )
           }
           placeholder={field.placeholder ?? "One item per line"}
+        />
+      );
+    }
+
+    if (field.kind === "datetime") {
+      const value = asString(data[key]).slice(0, 16);
+      return (
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            id={`field-${key}`}
+            type="datetime-local"
+            className={cn(fieldClasses, "w-auto min-w-64")}
+            value={value}
+            onChange={(e) =>
+              setData((prev) => {
+                const next = { ...prev };
+                if (e.target.value) next[key] = e.target.value;
+                else delete next[key];
+                return next;
+              })
+            }
+          />
+          {value && (
+            <button type="button" onClick={() => setData((prev) => {
+              const next = { ...prev };
+              delete next[key];
+              return next;
+            })} className={pickerButtonClass}>
+              Clear
+            </button>
+          )}
+          <span className="text-xs text-text-muted">Nepal time (UTC+5:45)</span>
+        </div>
+      );
+    }
+
+    if (field.kind === "markdown") {
+      return (
+        <MarkdownEditor
+          // Keyed so moving between items starts the editor from that item's text.
+          key={initial?.id ?? "new"}
+          id={`field-${key}`}
+          value={asStrings(data[key])}
+          onChange={(lines) => setField(key, lines)}
         />
       );
     }

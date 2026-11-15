@@ -4,6 +4,7 @@ import { SEO_PAGES, type PageSeoData } from "@/lib/content/schemas";
 import { SITE_URL as BASE, absoluteUrl } from "@/lib/content/seo";
 import { INDUSTRIES } from "@/lib/data/industries";
 import { getAuthors } from "@/lib/content/authors";
+import { isLive } from "@/lib/content/scheduling";
 
 /** Content types that own a `/<segment>/<slug>` page. */
 const DETAIL_ROUTES: { type: string; segment: string }[] = [
@@ -44,8 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     DETAIL_ROUTES.map(async ({ type, segment }): Promise<MetadataRoute.Sitemap> => {
       try {
         const items = await listContent(type);
+        const now = Date.now();
         return items
           .filter((item) => item.slug)
+          // A scheduled article is not a page yet; listing it would hand
+          // crawlers a 404. Only articles carry `publishAt`.
+          .filter((item) => type !== "article" || isLive(item.data as { publishAt?: string }, now))
           .map((item) => {
             // Items keep their artwork under `image` (or `coverImage` for
             // galleries); listing it lets Google Images find it.

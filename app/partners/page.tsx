@@ -52,8 +52,8 @@ export default async function PartnersPage() {
       </PageHero>
 
       <section id="institutional" className="section">
-        <Container className="flex flex-col gap-8">
-          <SectionHeading eyebrow="Partners" title="Trusted By Leading Organizations" />
+        <Container className="flex flex-col gap-4 sm:gap-3">
+          <SectionHeading accent title="Trusted By Leading Organizations" />
           {/* The same wall the homepage uses, so a logo added in the admin
               looks identical in both places rather than being a name here
               and a mark there. */}

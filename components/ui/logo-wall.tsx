@@ -23,9 +23,9 @@ export type LogoWallItem = {
  * runs out first and never stretches or crops. A logo is a trademark; a
  * squashed one is the wrong logo.
  *
- * Deliberately plain: square corners, one hairline border, no fill and no
- * shadow. The grid is the structure, and a shadow under each tile would make
- * a wall of marks read as a wall of buttons.
+ * Deliberately plain: no cards, borders, fills or shadows. The logos sit
+ * straight on the page in an even grid (six across on wide screens) and the
+ * grid itself is the structure.
  *
  * Two columns on a phone is the floor — one column wastes the width, three
  * makes each mark too small to identify — and the counts step up from there
@@ -66,10 +66,20 @@ export function LogoWall({
         // minimum is its content, so one stubborn wide logo would push the
         // row past the viewport and give the whole page a horizontal
         // scrollbar. This lets every track shrink instead.
-        "grid grid-cols-2 gap-3 sm:gap-4",
+        // Centred and capped, with its own side padding on top of the page
+        // gutter, so the wall sits inset from the section edges (wide
+        // margins left and right) instead of running edge to edge.
+        // On desktop the wall takes 87% of the section's content width, which
+        // leaves ~15% of the viewport blank on each side and tops out at
+        // ~1400px on very wide screens.
+        "mx-auto w-full px-2 sm:px-6 lg:max-w-[80%] lg:px-0 2xl:max-w-[72%]",
+        // Rows butt up against each other on desktop (a 160px cell on a 160px
+        // pitch, as in the reference), so tall marks nearly touch the row
+        // below; the columns are ~38px apart.
+        "grid grid-cols-2 gap-x-6 gap-y-2 sm:gap-x-10 sm:gap-y-3 lg:gap-y-0 xl:gap-x-7",
         "[grid-template-columns:repeat(2,minmax(0,1fr))]",
         columns === "wide"
-          ? "sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:[grid-template-columns:repeat(5,minmax(0,1fr))]"
+          ? "sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:grid-cols-6"
           : "sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:[grid-template-columns:repeat(4,minmax(0,1fr))]",
         className
       )}
@@ -94,7 +104,7 @@ function LogoCard({ item }: { item: LogoWallItem }) {
       src={item.logo}
       alt={item.alt?.trim() || item.name}
       loading="lazy"
-      className="max-h-full max-w-full object-contain"
+      className="h-full w-full object-contain object-center lg:object-left"
     />
   ) : (
     /* No file yet: set the name. It is the organisation either way, and a
@@ -104,12 +114,17 @@ function LogoCard({ item }: { item: LogoWallItem }) {
     </span>
   );
 
-  /* `aspect-3/2` fixes every card to one rectangle regardless of what is
-     inside it, so rows line up top and bottom down the whole grid — the
-     alignment cannot drift as logos are added or swapped. */
+  /* A fixed-size cell with no border or fill: the logos sit directly on the
+     page. Each mark is fitted into its cell (`object-contain` on a
+     full-size image) and, on desktop, pinned to the cell's left edge and
+     centred vertically, so every column shares one left edge and every row
+     one centre line, whatever shape the logo is. Below `lg` the cells are
+     narrow and wide, so the marks are centred instead. */
   const shell =
-    "flex aspect-3/2 items-center justify-center rounded-none border-[0.5px] border-border bg-surface p-5 sm:p-6 hover:border-link transition-colors duration-200 ease-out-quint";
+    "flex h-28 items-center justify-center sm:h-36 lg:h-32 lg:justify-start";
 
+  /* A logo is a link only when it has a `url` set in the admin; clear the
+     URL there and it is a plain image. */
   if (item.url?.trim()) {
     return (
       <a
@@ -119,7 +134,7 @@ function LogoCard({ item }: { item: LogoWallItem }) {
         title={item.name}
         className={cn(
           shell,
-          "focus-ring transition-colors duration-ui ease-out-quint hover:border-text-muted/40"
+          "focus-ring transition-transform duration-200 ease-out-quint hover:scale-105"
         )}
       >
         {inner}

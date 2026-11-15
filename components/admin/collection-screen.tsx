@@ -23,7 +23,10 @@ export async function CollectionScreen({
   viewHref,
   viewLabel,
   extra,
+  children,
 }: {
+  /** Rendered between the header and the list — for a collection's own tools. */
+  children?: React.ReactNode;
   type: string;
   title: string;
   description: string;
@@ -69,6 +72,8 @@ export async function CollectionScreen({
           ))}
         </div>
       )}
+
+      {children}
 
       <ContentList
         type={type}

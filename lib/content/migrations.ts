@@ -130,6 +130,38 @@ const MIGRATIONS: Migration[] = [
       await db.query("UPDATE contact_submissions SET read_at = now() WHERE read_at IS NULL");
     },
   },
+  {
+    id: "2026-11-article-cover-images",
+    describe:
+      "Give the ten articles that shipped without artwork their cover image (public/images/insights).",
+    run: async () => {
+      // Only where the article has no image at all, so a cover an admin chose
+      // in the Blog editor is never replaced. New articles get theirs from the
+      // seed; this is just for the rows that already existed.
+      const slugs = [
+        "website-to-app-turn-your-website-into-a-mobile-app",
+        "accounting-software-for-small-business-in-nepal",
+        "software-testing-strategies-practical-guide",
+        "ai-engineering-in-nepal-skills-tools-roadmap",
+        "how-to-become-a-software-engineer-in-nepal",
+        "add-ai-to-business-software-in-nepal",
+        "ai-software-development-in-nepal",
+        "custom-software-vs-off-the-shelf",
+        "choosing-a-cloud-migration-partner",
+        "from-bootcamp-to-production",
+      ];
+      for (const slug of slugs) {
+        await db.query(
+          `UPDATE content_items
+              SET data = jsonb_set(data, '{image}', to_jsonb($2::text), true),
+                  updated_at = now()
+            WHERE type = 'article' AND slug = $1
+              AND coalesce(data->>'image', '') = ''`,
+          [slug, `/images/insights/${slug}.webp`]
+        );
+      }
+    },
+  },
 ];
 
 /**
