@@ -6,6 +6,13 @@ import { INDUSTRIES } from "@/lib/data/industries";
 import { getAuthors } from "@/lib/content/authors";
 import { isLive } from "@/lib/content/scheduling";
 
+/**
+ * Rebuilt every ten minutes, like the insights pages. Without this the sitemap
+ * is generated once at build time, so an article that goes live later on its
+ * schedule would not be listed until the next deploy.
+ */
+export const revalidate = 600;
+
 /** Content types that own a `/<segment>/<slug>` page. */
 const DETAIL_ROUTES: { type: string; segment: string }[] = [
   { type: "project", segment: "projects" },
