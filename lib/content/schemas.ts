@@ -38,7 +38,9 @@ export type FieldKind =
   | "datetime"
   | "json"
   | "check"
-  | "image";
+  | "image"
+  /** A video file uploaded straight to storage, or a pasted link. */
+  | "video";
 
 export type ContentField = {
   key: string;
@@ -854,11 +856,10 @@ export const CONTENT_SCHEMAS: ContentSchema[] = [
       { key: "role", label: "Role", kind: "text" },
       {
         key: "videoUrl",
-        label: "Video URL (9:16)",
-        kind: "url",
-        placeholder: "https://…/anjali.mp4",
+        label: "Video (9:16)",
+        kind: "video",
         helper:
-          "Vertical 9:16 MP4 (H.264/AAC) recorded by the client. Leave empty to show the written quote instead.",
+          "Upload a vertical 9:16 MP4 (H.264/AAC) recorded by the client — up to 100 MB — or paste a link. Leave empty to show the written quote instead.",
       },
       {
         key: "posterUrl",

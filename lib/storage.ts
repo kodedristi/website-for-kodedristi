@@ -1,5 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { mkdir, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 
 /**
  * Where uploaded files go.
@@ -34,6 +38,9 @@ const MIME_BY_EXT: Record<string, string> = {
   jpeg: "image/jpeg",
   gif: "image/gif",
   svg: "image/svg+xml",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
 };
 
 export function mimeForExtension(ext: string): string {
@@ -105,6 +112,63 @@ function describeStorageFailure(status: number, detail: string): string {
     return "a file with that name already exists in storage.";
   }
   return `Supabase storage returned ${status}. ${detail.slice(0, 300)}`;
+}
+
+/**
+ * A one-time URL the *browser* can upload a large file to directly.
+ *
+ * Images are small enough to relay through a route handler, but a testimonial
+ * clip is tens of megabytes and a serverless host rejects any request body
+ * past a few MB before our code runs. So for big files the server only
+ * authorises: it asks Supabase for a signed upload URL (using the service key,
+ * which never leaves the server) and hands that to the browser, which sends
+ * the bytes straight to Supabase. The token in the URL is scoped to this one
+ * object path and expires on its own.
+ */
+export async function createSignedUpload(
+  filename: string
+): Promise<{ uploadUrl: string; publicUrl: string }> {
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/upload/sign/${BUCKET}/${filename}`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${SERVICE_KEY}`,
+        "content-type": "application/json",
+      },
+      body: "{}",
+    }
+  );
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(describeStorageFailure(res.status, detail));
+  }
+
+  const { url } = (await res.json()) as { url?: string };
+  if (!url) throw new Error("Supabase did not return a signed upload URL.");
+
+  return {
+    // Supabase returns a path relative to /storage/v1, token included.
+    uploadUrl: `${SUPABASE_URL}/storage/v1${url}`,
+    publicUrl: `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${filename}`,
+  };
+}
+
+/**
+ * Local-disk counterpart of `createSignedUpload`, for `next dev` without
+ * Supabase credentials. Streams to disk rather than buffering, since the
+ * file can be large.
+ */
+export async function putLocalStream(
+  filename: string,
+  body: ReadableStream<Uint8Array>
+): Promise<{ url: string; bytes: number }> {
+  const dir = join(process.cwd(), "public", "uploads");
+  await mkdir(dir, { recursive: true });
+  const target = join(dir, filename);
+  await pipeline(Readable.fromWeb(body as NodeReadableStream<Uint8Array>), createWriteStream(target));
+  return { url: `/uploads/${filename}`, bytes: (await stat(target)).size };
 }
 
 async function putLocal(filename: string, body: Buffer): Promise<string> {

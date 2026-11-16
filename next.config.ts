@@ -15,6 +15,13 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
+  /* The middleware buffers request bodies (10 MB by default) on /api/admin
+     routes. Only the local-dev video upload sends a body that large; with
+     Supabase configured, videos go straight to storage and skip this. */
+  experimental: {
+    proxyClientMaxBodySize: "110mb",
+  },
+
   /* Production compression and optimization */
   compress: true,
   productionBrowserSourceMaps: false,

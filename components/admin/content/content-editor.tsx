@@ -11,6 +11,7 @@ import {
   type MediaItem,
 } from "@/components/admin/media-picker";
 import { MarkdownEditor } from "@/components/admin/markdown-editor";
+import { VideoField } from "@/components/admin/video-field";
 import { slugify, type ContentField, type ContentItem } from "@/lib/content/schemas";
 import { cn } from "@/lib/utils";
 
@@ -409,6 +410,17 @@ export function ContentEditor({
           {error && <div className="text-xs text-red-500">{error}</div>}
           {field.helper && <div className="text-xs text-text-muted">{field.helper}</div>}
         </div>
+      );
+    }
+
+    if (field.kind === "video") {
+      return (
+        <VideoField
+          id={`field-${key}`}
+          value={asString(data[key])}
+          onChange={(url) => setField(key, url)}
+          placeholder={field.placeholder}
+        />
       );
     }
 
