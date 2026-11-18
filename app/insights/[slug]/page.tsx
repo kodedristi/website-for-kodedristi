@@ -65,6 +65,7 @@ export default async function ArticleDetailPage({
         new Date(b.date).getTime() - new Date(a.date).getTime()
     )
     .slice(0, 3);
+  const next = related[0];
 
   return (
     <>
@@ -165,6 +166,30 @@ export default async function ArticleDetailPage({
                 className="rounded-2xl border border-border"
               />
             )}
+            {/* A next step near the top: most visitors leave long before the end of
+                a long article, so the way onward cannot live only at the bottom. */}
+            <div
+              aria-label="Next step"
+              className="panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-5"
+            >
+              {next ? (
+                <p className="min-w-0 text-sm leading-relaxed text-text-muted">
+                  <span className="font-semibold text-text-primary">Next: </span>
+                  <Link
+                    href={`/insights/${next.slug}`}
+                    className="focus-ring font-semibold text-link underline underline-offset-2 hover:no-underline"
+                  >
+                    {next.title}
+                  </Link>
+                </p>
+              ) : (
+                <p className="text-sm text-text-muted">Questions about this topic?</p>
+              )}
+              <Button href="/contact" size="sm" variant="outline" className="shrink-0">
+                Talk to our team
+              </Button>
+            </div>
+
             <ArticleBody body={article.body} showContents={false} />
 
             <div className="card flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
@@ -172,6 +197,19 @@ export default async function ArticleDetailPage({
                 <p className="text-lg font-semibold text-text-primary">Have a project in mind?</p>
                 <p className="mt-1 text-sm leading-relaxed text-text-muted">
                   Tell us what you&apos;re trying to solve.
+                  {next && (
+                    <>
+                      {" "}
+                      Or keep reading:{" "}
+                      <Link
+                        href={`/insights/${next.slug}`}
+                        className="focus-ring font-semibold text-link underline underline-offset-2 hover:no-underline"
+                      >
+                        {next.title}
+                      </Link>
+                      .
+                    </>
+                  )}
                 </p>
               </div>
               <Button href="/contact" className="shrink-0">
